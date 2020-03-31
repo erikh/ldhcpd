@@ -8,7 +8,6 @@ import (
 	"code.hollensbe.org/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // ErrRangeExhausted is returned when the IP range is exhausted
@@ -61,17 +60,21 @@ func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 	a.lastIPMutex.Lock()
 	defer a.lastIPMutex.Unlock()
 
+	var foundFirst bool
 	for {
 		ip := dhcp4.IPAdd(a.lastIP, 1)
 
 		if !dhcp4.IPInRange(first, last, ip) {
+			if foundFirst {
+				return nil, ErrRangeExhausted
+			}
 			a.lastIP = first
+			foundFirst = true
 		} else {
 			a.lastIP = ip
 		}
 
 		if err := a.db.SetLease(mac, a.lastIP, true, time.Now().Add(a.config.LeaseDuration)); err != nil {
-			logrus.Error(err, "Could not acquire lease for mac [%v] ip [%v]", mac, a.lastIP)
 			continue
 		}
 

@@ -1,24 +1,28 @@
 package testutil
 
-import "net"
-
-const (
-	fakeMACAddr  = "01:01:01:01:01:01"
-	fakeMACAddr2 = "02:02:02:02:02:02"
+import (
+	"crypto/rand"
+	"net"
 )
 
-var FakeMAC, FakeMAC2 net.HardwareAddr
+var (
+	// FakeMAC is testing data
+	FakeMAC = RandomMAC()
+	// FakeMAC2 is testing data
+	FakeMAC2 = RandomMAC()
+)
 
-func init() {
-	var err error
-
-	FakeMAC, err = net.ParseMAC(fakeMACAddr)
+// RandomMAC uses entropy to generate a mac... or else
+func RandomMAC() net.HardwareAddr {
+	hwaddr := make([]byte, 6)
+	n, err := rand.Read(hwaddr)
 	if err != nil {
 		panic(err)
 	}
 
-	FakeMAC2, err = net.ParseMAC(fakeMACAddr2)
-	if err != nil {
-		panic(err)
+	if n != 6 {
+		panic("short read in randommac")
 	}
+
+	return net.HardwareAddr(hwaddr)
 }
