@@ -8,10 +8,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const defaultDBFile = "ldhcpd.db"
+
 // Config is the configuration of the dhcpd service
 type Config struct {
 	DNSServers []string `yaml:"dns_servers"`
 	Gateway    string   `yaml:"gateway"`
+	DBFile     string   `yaml:"db_file"`
 }
 
 // ParseConfig parses the configuration in the file and returns it.
@@ -27,16 +30,20 @@ func ParseConfig(filename string) (Config, error) {
 		return config, errors.Wrap(err, "error while parsing configuration file")
 	}
 
-	return config, config.validate()
+	return config, config.validateAndFix()
 }
 
-func (c Config) validate() error {
+func (c *Config) validateAndFix() error {
 	if len(c.GatewayIP()) != 4 {
 		return errors.New("gateway IP is invalid")
 	}
 
 	if len(c.DNS())%4 != 0 {
 		return errors.New("DNS servers contain invalid IPs")
+	}
+
+	if c.DBFile == "" {
+		c.DBFile = defaultDBFile
 	}
 
 	return nil

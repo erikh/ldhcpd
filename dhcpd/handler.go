@@ -3,6 +3,7 @@ package dhcpd
 import (
 	"net"
 
+	"code.hollensbe.org/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 )
@@ -12,6 +13,7 @@ type Handler struct {
 	ip      net.IP
 	options dhcp4.Options
 	config  Config
+	db      *db.DB
 }
 
 // NewHandler creates a new dhcpd handler.
@@ -19,6 +21,11 @@ func NewHandler(interfaceName, configFile string) (*Handler, error) {
 	config, err := ParseConfig(configFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "while loading configuation")
+	}
+
+	db, err := db.NewDB(config.DBFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "while bootstrapping dhcpd database")
 	}
 
 	intf, err := net.InterfaceByName(interfaceName)
@@ -43,10 +50,16 @@ func NewHandler(interfaceName, configFile string) (*Handler, error) {
 	return &Handler{
 		ip:     ip.IP,
 		config: config,
+		db:     db,
 		options: dhcp4.Options{
 			dhcp4.OptionSubnetMask:       ip.Mask,
 			dhcp4.OptionRouter:           config.GatewayIP(),
 			dhcp4.OptionDomainNameServer: config.DNS(),
 		},
 	}, nil
+}
+
+// Close the handler
+func (h *Handler) Close() error {
+	return h.db.Close()
 }
