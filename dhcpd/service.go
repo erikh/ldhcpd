@@ -11,15 +11,33 @@ import (
 func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
 	switch msgType {
 	case dhcp4.Discover:
-		logrus.Infof("received discover")
-		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, dhcp4.IPAdd(h.ip, 1), 24*time.Hour, h.options.SelectOrderOrAll(nil))
+		logrus.Infof("received discover from %v", req.CHAddr())
+
+		ip, err := h.allocator.Allocate(req.CHAddr(), true)
+		if err != nil {
+			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
+			return nil
+		}
+
+		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, ip, 24*time.Hour, h.options.SelectOrderOrAll(nil))
 	case dhcp4.Request:
-		logrus.Info("recieved request")
-		return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, req.CIAddr(), 24*time.Hour, h.options.SelectOrderOrAll(nil))
+		logrus.Infof("received request for %v from %v", req.CIAddr(), req.CHAddr())
+
+		ip, err := h.allocator.Allocate(req.CHAddr(), true)
+		if err != nil {
+			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
+			return nil
+		}
+
+		if req.CIAddr().IsUnspecified() || req.CIAddr().Equal(ip) {
+			return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, ip, 24*time.Hour, h.options.SelectOrderOrAll(nil))
+		}
+
+		return nil
 	case dhcp4.Release:
-		logrus.Info("recieved release")
+		logrus.Info("received release")
 	case dhcp4.Decline:
-		logrus.Info("recieved decline")
+		logrus.Info("received decline")
 	}
 
 	return nil

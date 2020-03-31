@@ -2,18 +2,36 @@ package dhcpd
 
 import (
 	"net"
+	"time"
 
 	"code.hollensbe.org/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Handler is the dhpcd handler for serving requests.
 type Handler struct {
-	ip      net.IP
-	options dhcp4.Options
-	config  Config
-	db      *db.DB
+	ip        net.IP
+	options   dhcp4.Options
+	config    Config
+	db        *db.DB
+	allocator *Allocator
+}
+
+func (h *Handler) purgeLeases() {
+	for {
+		time.Sleep(time.Second)
+		count, err := h.db.PurgeLeases()
+		if err != nil {
+			logrus.Errorf("While purging leases: %v", err)
+			continue
+		}
+
+		if count != 0 {
+			logrus.Infof("Periodic purge of %d expired leases occurred", count)
+		}
+	}
 }
 
 // NewHandler creates a new dhcpd handler.
@@ -47,16 +65,27 @@ func NewHandler(interfaceName, configFile string) (*Handler, error) {
 		return nil, errors.New("internal error resolving interface address")
 	}
 
-	return &Handler{
-		ip:     ip.IP,
-		config: config,
-		db:     db,
+	alloc, err := NewAllocator(db, config, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "while initializing allocator")
+	}
+
+	h := &Handler{
+		ip:        ip.IP,
+		config:    config,
+		db:        db,
+		allocator: alloc,
 		options: dhcp4.Options{
 			dhcp4.OptionSubnetMask:       ip.Mask,
 			dhcp4.OptionRouter:           config.GatewayIP(),
 			dhcp4.OptionDomainNameServer: config.DNS(),
 		},
-	}, nil
+	}
+
+	// FIXME this should be a toggle
+	go h.purgeLeases()
+
+	return h, nil
 }
 
 // Close the handler
