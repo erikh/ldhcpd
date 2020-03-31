@@ -77,7 +77,7 @@ func NewHandlerFromConfig(interfaceName string, config Config) (*Handler, error)
 	}
 
 	h := &Handler{
-		ip:        ip.IP,
+		ip:        ip.IP.To4(),
 		config:    config,
 		db:        db,
 		allocator: alloc,
