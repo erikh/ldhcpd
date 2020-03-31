@@ -68,7 +68,14 @@ func setupTest(t *testing.T) {
 		}
 
 		if ip != nil {
-			if err := netlink.AddrAdd(link, &netlink.Addr{IPNet: &net.IPNet{IP: ip, Mask: net.IPv4Mask(255, 255, 255, 0)}}); err != nil {
+			addr := &netlink.Addr{
+				IPNet: &net.IPNet{
+					IP:   ip,
+					Mask: net.IPv4Mask(255, 255, 255, 0),
+				},
+			}
+
+			if err := netlink.AddrAdd(link, addr); err != nil {
 				t.Fatalf("Could not configure ip: %v", err)
 			}
 		}
