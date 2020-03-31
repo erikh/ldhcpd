@@ -23,7 +23,7 @@ func NewHandler(interfaceName, configFile string) (*Handler, error) {
 		return nil, errors.Wrap(err, "while loading configuation")
 	}
 
-	db, err := db.NewDB(config.DBFile)
+	db, err := config.NewDB()
 	if err != nil {
 		return nil, errors.Wrap(err, "while bootstrapping dhcpd database")
 	}

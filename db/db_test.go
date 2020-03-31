@@ -6,28 +6,9 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"code.hollensbe.org/erikh/ldhcpd/testutil"
 )
-
-const (
-	fakeMACAddr  = "01:01:01:01:01:01"
-	fakeMACAddr2 = "02:02:02:02:02:02"
-)
-
-var fakeMAC, fakeMAC2 net.HardwareAddr
-
-func init() {
-	var err error
-
-	fakeMAC, err = net.ParseMAC(fakeMACAddr)
-	if err != nil {
-		panic(err)
-	}
-
-	fakeMAC2, err = net.ParseMAC(fakeMACAddr2)
-	if err != nil {
-		panic(err)
-	}
-}
 
 func TestDBLeaseCRUD(t *testing.T) {
 	db, err := NewDB("test.db")
@@ -37,11 +18,11 @@ func TestDBLeaseCRUD(t *testing.T) {
 	defer db.Close()
 	defer os.Remove("test.db")
 
-	if err := db.SetLease(fakeMAC, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Second)); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 
-	if err := db.SetLease(fakeMAC2, net.ParseIP("10.0.0.2"), false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.2"), false, time.Now().Add(time.Second)); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 
@@ -56,15 +37,15 @@ func TestDBLeaseCRUD(t *testing.T) {
 		t.Fatalf("Did not purge the right number of leases, expected 2, got %d", count)
 	}
 
-	if err := db.SetLease(fakeMAC, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Second)); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 
-	if _, err := db.RenewLease(fakeMAC2, time.Now().Add(time.Minute)); err == nil {
+	if _, err := db.RenewLease(testutil.FakeMAC2, time.Now().Add(time.Minute)); err == nil {
 		t.Fatal("did not error renewing lease for missing mac")
 	}
 
-	lease, err := db.RenewLease(fakeMAC, time.Now().Add(time.Minute))
+	lease, err := db.RenewLease(testutil.FakeMAC, time.Now().Add(time.Minute))
 	if err != nil {
 		t.Fatalf("could not renew lease: %v", err)
 	}
@@ -76,7 +57,7 @@ func TestDBLeaseCRUD(t *testing.T) {
 		t.Fatal("Lease ending was not updated")
 	}
 
-	if err := db.SetLease(fakeMAC2, net.ParseIP("10.0.0.2"), false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.2"), false, time.Now().Add(time.Second)); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 }
@@ -89,15 +70,15 @@ func TestDBLease(t *testing.T) {
 	defer db.Close()
 	defer os.Remove("test.db")
 
-	if _, err := db.GetLease(fakeMAC); err == nil {
+	if _, err := db.GetLease(testutil.FakeMAC); err == nil {
 		t.Fatalf("Found lease where there shouldn't be one")
 	}
 
-	if err := db.SetLease(fakeMAC, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Hour)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("Found lease where there shouldn't be one")
 	}
 
-	l, err := db.GetLease(fakeMAC)
+	l, err := db.GetLease(testutil.FakeMAC)
 	if err != nil {
 		t.Fatalf("Did not find lease where there should be one")
 	}
@@ -111,15 +92,15 @@ func TestDBLease(t *testing.T) {
 		t.Fatalf("While parsing mac for lease: %v", err)
 	}
 
-	if !bytes.Equal(tmpMac, fakeMAC) {
+	if !bytes.Equal(tmpMac, testutil.FakeMAC) {
 		t.Fatalf("Mac address is not equal in lease: %v", tmpMac.String())
 	}
 
-	if err := db.SetLease(fakeMAC2, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Hour)); err == nil {
+	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Hour)); err == nil {
 		t.Fatal("Should not have been able to create a second lease for 10.0.0.1")
 	}
 
-	if err := db.SetLease(fakeMAC, net.ParseIP("10.0.0.2"), false, time.Now().Add(time.Hour)); err == nil {
-		t.Fatalf("Should not have been able to create a second lease for %v", fakeMAC.String())
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.2"), false, time.Now().Add(time.Hour)); err == nil {
+		t.Fatalf("Should not have been able to create a second lease for %v", testutil.FakeMAC.String())
 	}
 }

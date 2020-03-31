@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"code.hollensbe.org/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -114,4 +115,9 @@ func (c Config) DNS() []byte {
 	}
 
 	return ips
+}
+
+// NewDB creates a new DB connection and migrates it if necessary.
+func (c Config) NewDB() (*db.DB, error) {
+	return db.NewDB(c.DBFile)
 }

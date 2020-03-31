@@ -25,10 +25,14 @@ type Allocator struct {
 
 // NewAllocator creates a new allocator
 func NewAllocator(db *db.DB, c Config, initial net.IP) (*Allocator, error) {
+	if initial == nil {
+		initial = net.ParseIP(c.DynamicRange.From)
+	}
+
 	return &Allocator{
 		config: c,
 		db:     db,
-		lastIP: initial,
+		lastIP: dhcp4.IPAdd(initial, -1),
 	}, nil
 }
 
@@ -38,10 +42,10 @@ func NewAllocator(db *db.DB, c Config, initial net.IP) (*Allocator, error) {
 func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 	l, err := a.db.GetLease(mac)
 	if err == nil {
-		if l.LeaseEnd.Before(time.Now()) { // XXX additional logic to carry the IP for renews
+		if l.LeaseEnd.Before(time.Now()) {
 			if renew {
-				// FIXME delete/update leases -- this will fail every time right now
-				if err := a.db.SetLease(mac, a.lastIP, l.Dynamic, time.Now().Add(a.config.LeaseDuration)); err != nil {
+				l, err := a.db.RenewLease(mac, time.Now().Add(a.config.LeaseDuration))
+				if err != nil {
 					return nil, errors.Wrapf(err, "could not renew lease for mac [%v] ip [%v]", mac, a.lastIP)
 				}
 
