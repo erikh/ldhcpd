@@ -3,11 +3,13 @@ package dhcpd
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestConfig(t *testing.T) {
 	outConfigs := map[string]Config{
 		"basic": {
+			LeaseDuration: defaultLeaseDuration,
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",
@@ -20,8 +22,22 @@ func TestConfig(t *testing.T) {
 			DBFile: defaultDBFile,
 		},
 		"no dns": {
-			DNSServers: []string{},
-			Gateway:    "10.0.20.1",
+			LeaseDuration: defaultLeaseDuration,
+			DNSServers:    []string{},
+			Gateway:       "10.0.20.1",
+			DynamicRange: Range{
+				From: "10.0.20.50",
+				To:   "10.0.20.100",
+			},
+			DBFile: defaultDBFile,
+		},
+		"lease duration populated": {
+			LeaseDuration: time.Hour,
+			DNSServers: []string{
+				"10.0.0.1",
+				"1.1.1.1",
+			},
+			Gateway: "10.0.20.1",
 			DynamicRange: Range{
 				From: "10.0.20.50",
 				To:   "10.0.20.100",
@@ -29,6 +45,7 @@ func TestConfig(t *testing.T) {
 			DBFile: defaultDBFile,
 		},
 		"db file populated": {
+			LeaseDuration: defaultLeaseDuration,
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",
@@ -72,6 +89,18 @@ func TestConfig(t *testing.T) {
 				To:   "10.0.20.100",
 			},
 			DBFile: "foo.db",
+		},
+		"lease duration populated": {
+			LeaseDuration: time.Hour,
+			DNSServers: []string{
+				"10.0.0.1",
+				"1.1.1.1",
+			},
+			Gateway: "10.0.20.1",
+			DynamicRange: Range{
+				From: "10.0.20.50",
+				To:   "10.0.20.100",
+			},
 		},
 	}
 

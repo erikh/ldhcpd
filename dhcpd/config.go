@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"time"
 
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
-const defaultDBFile = "ldhcpd.db"
+const (
+	defaultDBFile        = "ldhcpd.db"
+	defaultLeaseDuration = 24 * time.Hour
+)
 
 // Range is for IP ranges
 type Range struct {
@@ -42,10 +46,11 @@ func (r Range) Dimensions() (net.IP, net.IP) {
 
 // Config is the configuration of the dhcpd service
 type Config struct {
-	DNSServers   []string `yaml:"dns_servers"`
-	Gateway      string   `yaml:"gateway"`
-	DBFile       string   `yaml:"db_file"`
-	DynamicRange Range    `yaml:"dynamic_range"`
+	DNSServers    []string      `yaml:"dns_servers"`
+	Gateway       string        `yaml:"gateway"`
+	DBFile        string        `yaml:"db_file"`
+	DynamicRange  Range         `yaml:"dynamic_range"`
+	LeaseDuration time.Duration `yaml:"lease_duration"`
 }
 
 // ParseConfig parses the configuration in the file and returns it.
@@ -87,6 +92,10 @@ func (c *Config) validateAndFix() error {
 
 	if c.DBFile == "" {
 		c.DBFile = defaultDBFile
+	}
+
+	if c.LeaseDuration == 0 {
+		c.LeaseDuration = defaultLeaseDuration
 	}
 
 	return nil
