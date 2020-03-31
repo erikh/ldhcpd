@@ -1,6 +1,10 @@
 IMAGE_NAME ?= ldhcpd:testing
 CODE_PATH ?= /go/src/code.hollensbe.org/erikh/ldhcpd
 DOCKER_CMD := docker run -it --cap-add NET_ADMIN -e IN_DOCKER=1 -e SETUID=$$(id -u) -e SETGID=$$(id -g) -w $(CODE_PATH) -v ${PWD}/.go-cache:/tmp/go-build-cache -v ${PWD}:$(CODE_PATH) $(IMAGE_NAME)
+GO_TEST := sudo go test -v ./... -race -count 1
+
+install:
+	go install -v ./...
 
 shell: build
 	mkdir -p .go-cache
@@ -35,6 +39,6 @@ get-box:
 	fi
 
 test:
-	if [ -z "$${IN_DOCKER}" ]; then make build && $(DOCKER_CMD) sudo go test -v ./... -count 1; else sudo go test -v ./... -count 1; fi
+	if [ -z "$${IN_DOCKER}" ]; then make build && $(DOCKER_CMD) $(GO_TEST); else $(GO_TEST); fi
 
 .PHONY: test
