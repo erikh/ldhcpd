@@ -6,7 +6,7 @@ shell: build
 	mkdir -p .go-cache
 	$(DOCKER_CMD)	
 
-build:
+build: get-box
 	box -t $(IMAGE_NAME) box.rb
 
 docker-check:
@@ -27,5 +27,14 @@ interfaces: docker-check clean-interfaces
 	for i in veth0 veth1 veth2 veth3; do sudo ip link set dev $$i up; done
 	sudo ip addr add dev veth1 10.0.20.1/24
 
+get-box:
+	@if [ ! -f "$(shell which box)" ]; \
+	then \
+		echo "Need to install box to build the docker images we use. Requires root access."; \
+		curl -sSL box-builder.sh | sudo bash; \
+	fi
+
 test:
 	if [ -z "$${IN_DOCKER}" ]; then make build && $(DOCKER_CMD) sudo go test -v ./... -count 1; else sudo go test -v ./... -count 1; fi
+
+.PHONY: test

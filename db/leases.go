@@ -10,7 +10,7 @@ import (
 type IPAddress struct {
 	gorm.Model
 
-	Address   string
+	Address   string `gorm:"unique"`
 	Allocated bool
 }
 
@@ -23,7 +23,7 @@ func (ip *IPAddress) IP() net.IP {
 type MACAddress struct {
 	gorm.Model
 
-	HardwareAddress string
+	HardwareAddress string `gorm:"unique"`
 }
 
 // HardwareAddr returns the typed hardware address for the mac.
