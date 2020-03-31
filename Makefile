@@ -9,12 +9,15 @@ shell: build
 build:
 	box -t $(IMAGE_NAME) box.rb
 
-clean-interfaces:
+docker-check:
+	@if [ -z "$${IN_DOCKER}" ]; then echo "You really don't want to do this"; exit 1; fi
+
+clean-interfaces: docker-check
 	(for i in veth0 veth1 veth2 veth3; do sudo ip link del $$i; done) || :
-	sudo ip link set br0 down
+	sudo ip link set br0 down || :
 	sudo brctl delbr br0 || :
 
-interfaces: clean-interfaces
+interfaces: docker-check clean-interfaces
 	sudo brctl addbr br0
 	sudo ip link add type veth
 	sudo brctl addif br0 veth0
@@ -25,4 +28,4 @@ interfaces: clean-interfaces
 	sudo ip addr add dev veth1 10.0.20.1/24
 
 test:
-	if [ -z "$${IN_DOCKER}" ]; then make build && $(DOCKER_CMD) sudo go test -v ./...; else sudo go test -v ./...; fi
+	if [ -z "$${IN_DOCKER}" ]; then make build && $(DOCKER_CMD) sudo go test -v ./... -count 1; else sudo go test -v ./... -count 1; fi
