@@ -30,7 +30,7 @@ func ParseConfig(filename string) (Config, error) {
 	return config, config.validate()
 }
 
-func (c *Config) validate() error {
+func (c Config) validate() error {
 	if len(c.GatewayIP()) != 4 {
 		return errors.New("gateway IP is invalid")
 	}
