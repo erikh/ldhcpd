@@ -21,6 +21,9 @@ $ make interfaces
 $ make install
 $ sudo ldhcpd veth1 example.conf &
 $ sudo dhclient -1 -v -d veth3
+# ^C it to stop it
+$ ip addr
+# veth3 -> 10.0.20.50
 ```
 
 ## Author
