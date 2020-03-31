@@ -2,40 +2,46 @@ package db
 
 import (
 	"net"
+	"time"
 
 	"github.com/jinzhu/gorm"
 )
 
-// IPAddress is the list of addresses that can be allocated
-type IPAddress struct {
-	gorm.Model
-
-	Address   string `gorm:"unique"`
-	Allocated bool
+// Lease is a pre-programmed DHCP lease
+type Lease struct {
+	MACAddress string `gorm:"primary_key"`
+	IPAddress  string `gorm:"unique"`
+	Dynamic    bool
+	LeaseEnd   time.Time
 }
 
 // IP returns the parsed, typed IP made for a ipv4 network.
-func (ip *IPAddress) IP() net.IP {
-	return net.ParseIP(ip.Address).To4()
-}
-
-// MACAddress is a network hardware address.
-type MACAddress struct {
-	gorm.Model
-
-	HardwareAddress string `gorm:"unique"`
+func (l *Lease) IP() net.IP {
+	return net.ParseIP(l.IPAddress).To4()
 }
 
 // HardwareAddr returns the typed hardware address for the mac.
-func (mac *MACAddress) HardwareAddr() (net.HardwareAddr, error) {
-	return net.ParseMAC(mac.HardwareAddress)
+func (l *Lease) HardwareAddr() (net.HardwareAddr, error) {
+	return net.ParseMAC(l.MACAddress)
 }
 
-// Lease is a pre-programmed DHCP lease
-type Lease struct {
-	gorm.Model
+// GetLease retrieves the lease if possible, otherwise returns error.
+func (db *DB) GetLease(mac net.HardwareAddr) (*Lease, error) {
+	l := &Lease{}
 
-	MAC     MACAddress
-	IP      IPAddress
-	Dynamic bool
+	return l, db.db.Transaction(func(tx *gorm.DB) error {
+		return tx.First(l, "mac_address = ?", mac.String()).Error
+	})
+}
+
+// SetLease creates a lease if possible.
+func (db *DB) SetLease(mac net.HardwareAddr, ip net.IP, dynamic bool, end time.Time) error {
+	return db.db.Transaction(func(tx *gorm.DB) error {
+		return tx.Create(&Lease{
+			MACAddress: mac.String(),
+			IPAddress:  ip.String(),
+			Dynamic:    dynamic,
+			LeaseEnd:   end,
+		}).Error
+	})
 }

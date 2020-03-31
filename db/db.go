@@ -18,7 +18,7 @@ func NewDB(dbfile string) (*DB, error) {
 		return nil, errors.Wrap(err, "could not connect to db")
 	}
 
-	if err := db.AutoMigrate(&IPAddress{}, &MACAddress{}, &Lease{}).Error; err != nil {
+	if err := db.AutoMigrate(&Lease{}).Error; err != nil {
 		return nil, errors.Wrap(err, "while migrating database")
 	}
 
