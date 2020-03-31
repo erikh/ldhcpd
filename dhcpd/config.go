@@ -1,20 +1,51 @@
 package dhcpd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 
+	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
 const defaultDBFile = "ldhcpd.db"
 
+// Range is for IP ranges
+type Range struct {
+	From string `yaml:"from"`
+	To   string `yaml:"to"`
+}
+
+func (r Range) String() string {
+	return fmt.Sprintf("%v -> %v", r.From, r.To)
+}
+
+func (r Range) validate() error {
+	from, to := r.Dimensions()
+	if len(from) != 4 || len(to) != 4 {
+		return errors.Errorf("invalid IP in range %v", r)
+	}
+
+	if dhcp4.IPLess(to, from) {
+		return errors.Errorf("IPs are improperly specified in range: %v", r)
+	}
+
+	return nil
+}
+
+// Dimensions returns the IP addresses within the range
+func (r Range) Dimensions() (net.IP, net.IP) {
+	return net.ParseIP(r.From).To4(), net.ParseIP(r.To).To4()
+}
+
 // Config is the configuration of the dhcpd service
 type Config struct {
-	DNSServers []string `yaml:"dns_servers"`
-	Gateway    string   `yaml:"gateway"`
-	DBFile     string   `yaml:"db_file"`
+	DNSServers   []string `yaml:"dns_servers"`
+	Gateway      string   `yaml:"gateway"`
+	DBFile       string   `yaml:"db_file"`
+	DynamicRange Range    `yaml:"dynamic_range"`
 }
 
 // ParseConfig parses the configuration in the file and returns it.
@@ -34,8 +65,20 @@ func ParseConfig(filename string) (Config, error) {
 }
 
 func (c *Config) validateAndFix() error {
+	if err := c.DynamicRange.validate(); err != nil {
+		return errors.Wrap(err, "could not validate dynamic range")
+	}
+
 	if len(c.GatewayIP()) != 4 {
 		return errors.New("gateway IP is invalid")
+	}
+
+	if len(c.DNSServers) == 0 {
+		c.DNSServers = []string{}
+	}
+
+	if len(c.DNSServers) > 0 && len(c.DNS()) == 0 {
+		return errors.New("DNS servers contains invalid IPs")
 	}
 
 	if len(c.DNS())%4 != 0 {

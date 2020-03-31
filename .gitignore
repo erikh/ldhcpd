@@ -1,3 +1,4 @@
 .bash_history
 .go-cache
+.sqlite_history
 *.db
