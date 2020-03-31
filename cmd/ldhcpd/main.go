@@ -23,7 +23,7 @@ func main() {
 
 func serve(ctx *cli.Context) error {
 	if len(ctx.Args()) != 2 {
-		return errors.New("usage: dhcpd [interface] [config file]")
+		return errors.Errorf("usage: %s [interface] [config file]", ctx.App.Name)
 	}
 
 	handler, err := dhcpd.NewHandler(ctx.Args()[0], ctx.Args()[1])
