@@ -1,28 +1,39 @@
 package dhcpd
 
 import (
+	"io"
+	"net"
+	"os"
+	"os/exec"
 	"testing"
+	"time"
 
+	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 )
 
 const defaultBridge = "testbridge0"
 
-var initialInterfaces = []string{"dhcpd0", "dhclient0"}
+var initialInterfaces = map[string]net.IP{"dhcpd0": net.ParseIP("10.0.20.1"), "dhclient0": nil}
 
 func addVethPair(name string, bridge *netlink.Bridge) error {
 	peerName := name + "-peer"
 
 	la := netlink.NewLinkAttrs()
 	la.Name = name
-	if err := netlink.LinkAdd(&netlink.Veth{LinkAttrs: la, PeerName: peerName}); err != nil {
+	veth := &netlink.Veth{LinkAttrs: la, PeerName: peerName}
+	if err := netlink.LinkAdd(veth); err != nil {
 		return errors.Wrap(err, "could not create veth pair")
 	}
 
 	peer, err := netlink.LinkByName(peerName)
 	if err != nil {
 		return errors.Wrap(err, "could not locate created peer")
+	}
+
+	if err := netlink.LinkSetUp(veth); err != nil {
+		return errors.Wrap(err, "could not raise peer")
 	}
 
 	if err := netlink.LinkSetUp(peer); err != nil {
@@ -46,7 +57,7 @@ func setupTest(t *testing.T) {
 		t.Fatalf("Could not create bridge: %v", err)
 	}
 
-	for _, name := range initialInterfaces {
+	for name, ip := range initialInterfaces {
 		if err := addVethPair(name, bridge); err != nil {
 			t.Fatalf("Could not add veth pair: %v", err)
 		}
@@ -54,6 +65,12 @@ func setupTest(t *testing.T) {
 		link, err := netlink.LinkByName(name)
 		if err != nil {
 			t.Fatalf("Could not find newly added link %v: %v", name, err)
+		}
+
+		if ip != nil {
+			if err := netlink.AddrAdd(link, &netlink.Addr{IPNet: &net.IPNet{IP: ip, Mask: net.IPv4Mask(255, 255, 255, 0)}}); err != nil {
+				t.Fatalf("Could not configure ip: %v", err)
+			}
 		}
 
 		if err := netlink.LinkSetUp(link); err != nil {
@@ -67,7 +84,7 @@ func setupTest(t *testing.T) {
 }
 
 func cleanupTest(t *testing.T) {
-	for _, name := range initialInterfaces {
+	for name := range initialInterfaces {
 		link, err := netlink.LinkByName(name)
 		if err == nil {
 			netlink.LinkSetDown(link)
@@ -92,4 +109,74 @@ func cleanupTest(t *testing.T) {
 func TestBasicACK(t *testing.T) {
 	setupTest(t)
 	defer cleanupTest(t)
+
+	time.Sleep(time.Second)
+
+	handler, err := NewHandlerFromConfig("dhcpd0", Config{
+		LeaseDuration: defaultLeaseDuration,
+		DNSServers: []string{
+			"10.0.0.1",
+			"1.1.1.1",
+		},
+		Gateway: "10.0.20.1",
+		DynamicRange: Range{
+			From: "10.0.20.50",
+			To:   "10.0.20.100",
+		},
+		DBFile: "test.db",
+	})
+
+	defer os.Remove("test.db")
+	defer handler.Close()
+
+	if err != nil {
+		t.Fatalf("Error configuring handler: %v", err)
+	}
+
+	go dhcp4.ListenAndServeIf("dhcpd0", handler)
+
+	cmd := exec.Command("dhclient", "-1", "-4", "-d", "-v", "dhclient0")
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatalf("Failed to create stdout pipe: %v", err)
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		t.Fatalf("Failed to create stderr pipe: %v", err)
+	}
+
+	go io.Copy(os.Stdout, stdout)
+	go io.Copy(os.Stderr, stderr)
+
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("Error running dhclient: %v", err)
+	}
+
+	time.Sleep(time.Second)
+
+	if err := exec.Command("pkill", "-KILL", "dhclient").Run(); err != nil {
+		t.Fatalf("Error killing dhclient: %v", err)
+	}
+
+	cmd.Wait() // don't care
+
+	dhc, err := netlink.LinkByName("dhclient0")
+	if err != nil {
+		t.Fatalf("Could not lookup dhclient veth pair: %v", err)
+	}
+
+	list, err := netlink.AddrList(dhc, netlink.FAMILY_V4)
+	if err != nil {
+		t.Fatalf("Could not list addresses for dhclient link: %v", err)
+	}
+
+	if len(list) != 1 {
+		t.Fatalf("Invalid addresses configured")
+	}
+
+	if !list[0].IP.Equal(net.ParseIP("10.0.20.50")) {
+		t.Fatalf("Was not the expected ip: was %v", list[0].IP)
+	}
 }
