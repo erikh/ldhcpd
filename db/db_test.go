@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	"net"
 	"os"
 	"testing"
@@ -45,6 +46,15 @@ func TestDBLease(t *testing.T) {
 
 	if l.IP().String() != "10.0.0.1" {
 		t.Fatalf("IP (%v) was not equal to 10.0.0.1", l.IPAddress)
+	}
+
+	tmpMac, err := l.HardwareAddr()
+	if err != nil {
+		t.Fatalf("While parsing mac for lease: %v", err)
+	}
+
+	if !bytes.Equal(tmpMac, mac) {
+		t.Fatalf("Mac address is not equal in lease: %v", tmpMac.String())
 	}
 
 	if err := db.SetLease(mac2, net.ParseIP("10.0.0.1"), false, time.Now().Add(time.Hour)); err == nil {
