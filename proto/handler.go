@@ -5,6 +5,7 @@ import (
 
 	"code.hollensbe.org/erikh/ldhcpd/db"
 	"github.com/golang/protobuf/ptypes/empty"
+	grpc "google.golang.org/grpc"
 )
 
 // Handler is the control plane handler.
@@ -12,9 +13,13 @@ type Handler struct {
 	db *db.DB
 }
 
-// NewHandler is a handler for the grpc control plane.
-func NewHandler(db *db.DB) *Handler {
-	return &Handler{db: db}
+// Boot boots the grpc service
+func Boot(db *db.DB) *grpc.Server {
+	h := &Handler{db: db}
+	s := grpc.NewServer()
+	RegisterLeaseControlServer(s, h)
+
+	return s
 }
 
 // SetLease creates an explicit lease with the parameters provided. It does not
