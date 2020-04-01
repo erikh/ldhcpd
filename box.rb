@@ -1,7 +1,7 @@
 from "golang:1.14"
 
 PROTOC_VERSION = "3.11.4"
-PROTOC_URL = "https://github.com/protocolbuffers/protobuf/releases/download/v#{PROTOC_VERSION}/protoc-#{PROTOC_VERSION}-linux-x86_64.zip"
+PROTOC_URL     = "https://github.com/protocolbuffers/protobuf/releases/download/v#{PROTOC_VERSION}/protoc-#{PROTOC_VERSION}-linux-x86_64.zip"
 
 def download(name, url)
   run "curl -sSL -o /#{name} '#{url}'"
