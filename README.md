@@ -1,8 +1,14 @@
-## light dhcpd
+## Light DHCPd
 
-This is a dhcpd with very few features. It provides basic dynamic pool
-allocation as well as static leases. iPXE support does not exist but is
+This is a DHCP service/daemon with very few features. It provides basic dynamic
+pool allocation as well as static leases. iPXE support does not exist but is
 planned.
+
+One thing light DHCPd offers that is novel, is a remote control plane powered
+over GRPC. This control plane can be embedded into your orchestration code or
+you can use the provided command-line tool to manipulate it from your shell.
+There is a golang client, and the protobufs are included in the source tree if
+you wish to generate clients for other languages.
 
 ## Instructions
 
