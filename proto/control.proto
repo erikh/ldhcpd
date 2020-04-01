@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service LeaseControl {
+  rpc SetLease(Lease)                   returns (google.protobuf.Empty) {};
+  rpc GetLease(MACAddress)              returns (Lease)                 {};
+  rpc ListLeases(google.protobuf.Empty) returns (Leases)                {};
+}
+
+message MACAddress {
+  string Address = 1;
+}
+
+message Lease {
+  string                    MACAddress = 1;
+  string                    IPAddress  = 2;
+  google.protobuf.Timestamp LeaseEnd   = 3;
+}
+
+message Leases {
+  repeated Lease List = 1;
+}
