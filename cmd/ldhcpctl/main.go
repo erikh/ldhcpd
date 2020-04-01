@@ -75,6 +75,16 @@ func getClient(ctx *cli.Context) (proto.LeaseControlClient, error) {
 	return proto.NewLeaseControlClient(cc), nil
 }
 
+func listLeases(leases []*proto.Lease) {
+	/// func NewWriter(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *Writer {
+	w := tabwriter.NewWriter(os.Stdout, 8, 2, 2, ' ', 0)
+	w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\t%s\n", "MAC", "IP", "Dynamic", "Lease End")))
+	for _, lease := range leases {
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%v\t%s\n", lease.MACAddress, lease.IPAddress, lease.Dynamic, time.Unix(lease.LeaseEnd.Seconds, 0))))
+	}
+	w.Flush()
+}
+
 func get(ctx *cli.Context) error {
 	if len(ctx.Args()) != 1 {
 		return errors.New("invalid arguments")
@@ -90,11 +100,7 @@ func get(ctx *cli.Context) error {
 		return errors.Wrapf(err, "while obtaining lease for %v", ctx.Args()[0])
 	}
 
-	fmt.Println("mac", lease.MACAddress)
-	fmt.Println("ip", lease.IPAddress)
-	fmt.Println("dynamic", lease.Dynamic)
-	fmt.Println("lease_end", lease.LeaseEnd.String())
-
+	listLeases([]*proto.Lease{lease})
 	return nil
 }
 
@@ -140,13 +146,7 @@ func list(ctx *cli.Context) error {
 		return errors.Wrap(err, "could not list leases")
 	}
 
-	/// func NewWriter(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *Writer {
-	w := tabwriter.NewWriter(os.Stdout, 8, 2, 2, ' ', 0)
-	w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\t%s\n", "MAC", "IP", "Dynamic", "Lease End")))
-	for _, lease := range leases.List {
-		w.Write([]byte(fmt.Sprintf("%s\t%s\t%v\t%s\n", lease.MACAddress, lease.IPAddress, lease.Dynamic, lease.LeaseEnd)))
-	}
-	w.Flush()
+	listLeases(leases.List)
 
 	return nil
 }
