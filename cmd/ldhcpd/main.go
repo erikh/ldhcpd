@@ -45,7 +45,17 @@ func serve(ctx *cli.Context) error {
 		return errors.Errorf("usage: %s [interface] [config file]", ctx.App.Name)
 	}
 
-	handler, err := dhcpd.NewHandler(ctx.Args()[0], ctx.Args()[1])
+	config, err := dhcpd.ParseConfig(ctx.Args()[1])
+	if err != nil {
+		return errors.Wrap(err, "while parsing configuration")
+	}
+
+	db, err := config.NewDB()
+	if err != nil {
+		return errors.Wrap(err, "while initialiing database")
+	}
+
+	handler, err := dhcpd.NewHandler(ctx.Args()[0], config, db)
 	if err != nil {
 		return errors.Wrap(err, "while configuring dhcpd")
 	}

@@ -1,10 +1,10 @@
 package proto
 
 import (
-	context "context"
+	"context"
 
 	"code.hollensbe.org/erikh/ldhcpd/db"
-	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 // Handler is the control plane handler.
