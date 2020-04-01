@@ -20,6 +20,7 @@ message Lease {
   string                    MACAddress = 1;
   string                    IPAddress  = 2;
   google.protobuf.Timestamp LeaseEnd   = 3;
+  bool                      Dynamic    = 4; // ignored for SetLease
 }
 
 message Leases {
