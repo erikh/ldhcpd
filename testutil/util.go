@@ -12,17 +12,26 @@ var (
 	FakeMAC2 = RandomMAC()
 )
 
-// RandomMAC uses entropy to generate a mac... or else
-func RandomMAC() net.HardwareAddr {
-	hwaddr := make([]byte, 6)
-	n, err := rand.Read(hwaddr)
+func getBytes(size int) []byte {
+	byt := make([]byte, size)
+	n, err := rand.Read(byt)
 	if err != nil {
 		panic(err)
 	}
 
-	if n != 6 {
+	if n != size {
 		panic("short read in randommac")
 	}
 
-	return net.HardwareAddr(hwaddr)
+	return byt
+}
+
+// RandomMAC uses entropy to generate a mac... or else
+func RandomMAC() net.HardwareAddr {
+	return net.HardwareAddr(getBytes(6))
+}
+
+// RandomIP returns a random IP.
+func RandomIP() net.IP {
+	return net.IP(getBytes(4))
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.hollensbe.org/erikh/ldhcpd/db"
+	"code.hollensbe.org/erikh/ldhcpd/testutil"
 	empty "github.com/golang/protobuf/ptypes/empty"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
@@ -116,5 +117,67 @@ func TestLeaseHandlerInput(t *testing.T) {
 
 	if len(list.List) != 0 {
 		t.Fatal("List contains data -- it shouldn't")
+	}
+}
+
+func TestLeaseHandlerSetGetLease(t *testing.T) {
+	client, l, s, db := setupTest(t)
+	defer cleanupTest(t, l, s, db)
+
+	list, err := client.ListLeases(context.Background(), &empty.Empty{})
+	if err != nil {
+		t.Fatalf("Error reading empty list of leases: %v", err)
+	}
+
+	if len(list.List) != 0 {
+		t.Fatal("List contains data -- it shouldn't")
+	}
+
+	table := map[string]string{}
+	ipUniq := map[string]struct{}{}
+	leaseEnd := time.Now().Add(time.Minute).Unix()
+
+	for i := 0; i < 1000; i++ {
+	retry:
+		mac := testutil.RandomMAC().String()
+		ip := testutil.RandomIP().String()
+		if _, ok := table[mac]; ok {
+			fmt.Println("mac table collision detected; resetting parameters")
+			goto retry
+		}
+		if _, ok := ipUniq[ip]; ok {
+			fmt.Println("ip table collision detected; resetting parameters")
+			goto retry
+		}
+		table[mac] = ip
+		ipUniq[ip] = struct{}{}
+
+		_, err := client.SetLease(
+			context.Background(),
+			&Lease{
+				MACAddress: mac,
+				IPAddress:  ip,
+				LeaseEnd: &timestamp.Timestamp{
+					Seconds: leaseEnd,
+				},
+			})
+		if err != nil {
+			t.Fatalf("Error while inserting mac/ip %s/%s: %v", mac, ip, err)
+		}
+	}
+
+	for mac, ip := range table {
+		lease, err := client.GetLease(context.Background(), &MACAddress{Address: mac})
+		if err != nil {
+			t.Fatalf("Error locating entered mac for address %s: %v", mac, err)
+		}
+
+		if lease.IPAddress != ip {
+			t.Fatalf("IPs do not match for mac lease: %s/%s", lease.IPAddress, ip)
+		}
+
+		if lease.LeaseEnd.Seconds != leaseEnd {
+			t.Fatalf("Lease ending times do not match: %v/%v", lease.LeaseEnd.Seconds, leaseEnd)
+		}
 	}
 }
