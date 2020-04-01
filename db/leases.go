@@ -76,3 +76,12 @@ func (db *DB) PurgeLeases() (int64, error) {
 		return db.Error
 	})
 }
+
+// ListLeases returns all leases in the lease table.
+func (db *DB) ListLeases() ([]*Lease, error) {
+	leases := []*Lease{}
+
+	return leases, db.db.Transaction(func(tx *gorm.DB) error {
+		return tx.Find(&leases).Error
+	})
+}

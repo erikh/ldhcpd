@@ -76,5 +76,14 @@ func (h *Handler) GetLease(ctx context.Context, mac *MACAddress) (*Lease, error)
 func (h *Handler) ListLeases(ctx context.Context, empty *empty.Empty) (*Leases, error) {
 	list := []*Lease{}
 
+	leases, err := h.db.ListLeases()
+	if err != nil {
+		return nil, status.Errorf(codes.Aborted, "could not list leases: %v", err)
+	}
+
+	for _, lease := range leases {
+		list = append(list, toGRPC(lease))
+	}
+
 	return &Leases{List: list}, nil
 }
