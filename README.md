@@ -1,13 +1,15 @@
 ## light dhcpd
 
-This is a dhcpd with very few features.
+This is a dhcpd with very few features. It provides basic dynamic pool
+allocation as well as static leases. iPXE support does not exist but is
+planned.
 
 ## Instructions
 
-- make test: This runs the tests.
-- make shell: This runs a docker shell. You can do a few things in here:
-  - make test: This is context-dependent and will run properly in the container
-  - make interfaces: This sets up some dummy interfaces and plumbs them through
+- `make shell`: This runs a docker shell. You can do a few things in here:
+  - `make test`: This is context-dependent and will run properly in the container
+    or outside of it, running the unit and functional tests in a container.
+  - `make interfaces`: This sets up some dummy interfaces and plumbs them through
     a bridge; afterwards `veth1` will be available for running a `ldhcpd` on, and
     `veth3` will be available for running a `dhclient` on.
 
@@ -26,6 +28,13 @@ $ sudo dhclient -1 -v -d veth3
 $ ip addr
 # veth3 -> 10.0.20.50
 ```
+
+## Dependencies
+
+- https://github.com/box-builder/box which is a mruby-based docker image builder.
+- https://github.com/krolaw/dhcp4 for the dhcp4 protocol work, thanks to the authors.
+- https://github.com/jinzhu/gorm and https://github.com/mattn/go-sqlite3 for the database work.
+- https://google.golang.org/grpc for the control plane protocol
 
 ## Author
 
