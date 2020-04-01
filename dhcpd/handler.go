@@ -35,18 +35,7 @@ func (h *Handler) purgeLeases() {
 }
 
 // NewHandler creates a new dhcpd handler.
-func NewHandler(interfaceName, configFile string) (*Handler, error) {
-	config, err := ParseConfig(configFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "while loading configuation")
-	}
-
-	return NewHandlerFromConfig(interfaceName, config)
-}
-
-// NewHandlerFromConfig is just like NewHandler only it accepts a config struct
-// instead of a file.
-func NewHandlerFromConfig(interfaceName string, config Config) (*Handler, error) {
+func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error) {
 	db, err := config.NewDB()
 	if err != nil {
 		return nil, errors.Wrap(err, "while bootstrapping dhcpd database")

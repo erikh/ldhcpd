@@ -119,7 +119,7 @@ func TestBasicACK(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	handler, err := NewHandlerFromConfig("dhcpd0", Config{
+	config := Config{
 		LeaseDuration: defaultLeaseDuration,
 		DNSServers: []string{
 			"10.0.0.1",
@@ -131,9 +131,17 @@ func TestBasicACK(t *testing.T) {
 			To:   "10.0.20.100",
 		},
 		DBFile: "test.db",
-	})
+	}
 
+	db, err := config.NewDB()
+	if err != nil {
+		t.Fatalf("Error initializing database: %v", err)
+	}
+	// handler closes the db for us
 	defer os.Remove("test.db")
+
+	handler, err := NewHandler("dhcpd0", config, db)
+
 	defer handler.Close()
 
 	if err != nil {

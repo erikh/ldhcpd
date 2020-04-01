@@ -13,6 +13,8 @@ DOCKER_CMD := docker run -it \
 	$(IMAGE_NAME)
 
 install:
+	go install -v github.com/golang/protobuf/protoc-gen-go
+	go generate -v ./...
 	go install -v ./...
 
 shell: build
