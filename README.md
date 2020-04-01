@@ -4,17 +4,18 @@ This is a dhcpd with very few features.
 
 ## Instructions
 
-- make test: this runs the tests
-- make shell: this runs a docker shell. you can do a few thing in here:
-  - make test: this is context-dependent and will run properly in the container
-  - make interfaces: this sets up some dummy interfaces and plumbs them through
-    a bridge; afterwards veth1 will be available for running a ldhcpd on, and
-    veth3 will be available for running a dhclient on.
+- make test: This runs the tests.
+- make shell: This runs a docker shell. You can do a few things in here:
+  - make test: This is context-dependent and will run properly in the container
+  - make interfaces: This sets up some dummy interfaces and plumbs them through
+    a bridge; afterwards `veth1` will be available for running a `ldhcpd` on, and
+    `veth3` will be available for running a `dhclient` on.
 
 Assuming you're not crazy enough to try this on your own network, try this at
 your shell instead:
 
 ```bash
+# installs box to build the images, will require sudo for that (but nothing else)
 $ make shell
 # <inside of container>
 $ make interfaces
