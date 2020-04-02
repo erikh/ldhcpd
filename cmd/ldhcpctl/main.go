@@ -57,6 +57,12 @@ func main() {
 			Usage:     "List all leases in the table",
 			Action:    list,
 		},
+		{
+			Name:      "remove",
+			ArgsUsage: "[mac address]",
+			Usage:     "Removea lease by mac address",
+			Action:    remove,
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -148,5 +154,24 @@ func list(ctx *cli.Context) error {
 
 	listLeases(leases.List)
 
+	return nil
+}
+
+func remove(ctx *cli.Context) error {
+	if len(ctx.Args()) != 1 {
+		return errors.New("invalid arguments")
+	}
+
+	client, err := getClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.RemoveLease(context.Background(), &proto.MACAddress{Address: ctx.Args()[0]})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Deleted %s\n", ctx.Args()[0])
 	return nil
 }
