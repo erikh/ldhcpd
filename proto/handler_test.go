@@ -180,4 +180,31 @@ func TestLeaseHandlerSetGetLease(t *testing.T) {
 			t.Fatalf("Lease ending times do not match: %v/%v", lease.LeaseEnd.Seconds, leaseEnd)
 		}
 	}
+
+	list, err = client.ListLeases(context.Background(), &empty.Empty{})
+	if err != nil {
+		t.Fatalf("error listing leases: %v", err)
+	}
+
+	if len(list.List) != 1000 {
+		t.Fatalf("List did not return all data: only %d rows exist or were returned", len(list.List))
+	}
+
+	for _, lease := range list.List {
+		if len(table[lease.MACAddress]) == 0 || table[lease.MACAddress] != lease.IPAddress {
+			t.Errorf("lease does not exist in list, or there is a mismatch")
+		}
+	}
+
+	for _, lease := range list.List {
+		if _, err := client.RemoveLease(context.Background(), &MACAddress{Address: lease.MACAddress}); err != nil {
+			t.Fatalf("error removing existing lease for %s: %v", lease.MACAddress, err)
+		}
+	}
+
+	for _, lease := range list.List {
+		if _, err := client.RemoveLease(context.Background(), &MACAddress{Address: lease.MACAddress}); err == nil {
+			t.Fatalf("no error removing missing deleted for %s: %v", lease.MACAddress, err)
+		}
+	}
 }

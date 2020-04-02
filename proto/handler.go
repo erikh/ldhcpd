@@ -87,3 +87,17 @@ func (h *Handler) ListLeases(ctx context.Context, empty *empty.Empty) (*Leases, 
 
 	return &Leases{List: list}, nil
 }
+
+// RemoveLease removes a lease.
+func (h *Handler) RemoveLease(ctx context.Context, mac *MACAddress) (*empty.Empty, error) {
+	m, err := net.ParseMAC(mac.Address)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "mac address is invalid: %v", err)
+	}
+
+	if err := h.db.RemoveLease(m); err != nil {
+		return nil, status.Errorf(codes.Aborted, "could not remove lease: %v", err)
+	}
+
+	return &empty.Empty{}, nil
+}

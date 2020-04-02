@@ -62,15 +62,26 @@ func (db *DB) RenewLease(mac net.HardwareAddr, end time.Time) (*Lease, error) {
 
 // RemoveLease removes a lease based on MAC.
 func (db *DB) RemoveLease(mac net.HardwareAddr) error {
-	return db.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Delete(&Lease{}, "mac_address = ?", mac.String()).Error
+	count := int64(0)
+	err := db.db.Transaction(func(tx *gorm.DB) error {
+		// shadowing db
+		db := tx.Delete(&Lease{}, "mac_address = ?", mac.String())
+		count = db.RowsAffected
+		return db.Error
 	})
+
+	if err == nil && count == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return err
 }
 
 // PurgeLeases removes all leases that are expired. It returns the count of expired leases, and an error if any.
 func (db *DB) PurgeLeases() (int64, error) {
 	var rows int64
 	return rows, db.db.Transaction(func(tx *gorm.DB) error {
+		// shadowing db
 		db := tx.Delete(&Lease{}, "lease_end < ?", time.Now())
 		rows = db.RowsAffected
 		return db.Error

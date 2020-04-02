@@ -9,6 +9,7 @@ service LeaseControl {
   rpc SetLease(Lease)                   returns (google.protobuf.Empty) {};
   rpc GetLease(MACAddress)              returns (Lease)                 {};
   rpc ListLeases(google.protobuf.Empty) returns (Leases)                {};
+  rpc RemoveLease(MACAddress)           returns (google.protobuf.Empty) {};
   // renew, delete lease
 }
 
