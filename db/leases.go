@@ -84,7 +84,7 @@ func (db *DB) PurgeLeases() (int64, error) {
 	var rows int64
 	return rows, db.db.Transaction(func(tx *gorm.DB) error {
 		// shadowing db
-		db := tx.Delete(&Lease{}, "lease_end < ?", time.Now())
+		db := tx.Delete(&Lease{}, "lease_end < ? and not persistent", time.Now())
 		rows = db.RowsAffected
 		return db.Error
 	})
