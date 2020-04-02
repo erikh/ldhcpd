@@ -4,6 +4,7 @@ GO_TEST := sudo go test -v ./... -race -count 1
 
 DOCKER_CMD := docker run -it \
 	--cap-add NET_ADMIN \
+	--rm \
 	-e IN_DOCKER=1 \
 	-e SETUID=$$(id -u) \
 	-e SETGID=$$(id -g) \
