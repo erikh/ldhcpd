@@ -239,3 +239,56 @@ func TestAllocatorGaps(t *testing.T) {
 		t.Fatalf("range was not exhausted during testing: %v", ip)
 	}
 }
+
+func TestAllocatorPersistent(t *testing.T) {
+	config := Config{
+		LeaseDuration: 100 * time.Millisecond,
+		DNSServers: []string{
+			"10.0.0.1",
+			"1.1.1.1",
+		},
+		Gateway: "10.0.20.1",
+		DynamicRange: Range{
+			From: "10.0.20.50",
+			To:   "10.0.20.59",
+		},
+		DBFile: "test.db",
+	}
+	defer os.Remove("test.db")
+
+	db, err := config.NewDB()
+	if err != nil {
+		t.Fatalf("Error creating database: %v", err)
+	}
+	defer db.Close()
+
+	a, err := NewAllocator(db, config, nil)
+	if err != nil {
+		t.Fatalf("error creating allocator: %v", err)
+	}
+
+	mac := testutil.RandomMAC()
+	if err := db.SetLease(mac, net.ParseIP("1.2.3.4"), false, true, time.Now()); err != nil {
+		t.Fatalf("Error setting lease: %v", err)
+	}
+
+	time.Sleep(time.Second)
+
+	count, err := db.PurgeLeases()
+	if err != nil {
+		t.Fatalf("Error purging leases: %v", err)
+	}
+
+	if count != 0 {
+		t.Fatal("Purged persistent lease for some reason")
+	}
+
+	ip, err := a.Allocate(mac, false)
+	if err != nil {
+		t.Fatalf("Error allocating mac: %v", err)
+	}
+
+	if ip.String() != "1.2.3.4" {
+		t.Fatalf("Got wrong ip back from allocator: %v, should be 1.2.3.4", ip.String())
+	}
+}

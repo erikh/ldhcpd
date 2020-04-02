@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -48,8 +49,14 @@ func main() {
 		{
 			Name:      "set",
 			ArgsUsage: "[mac address] [ip address] [leasetime]",
-			Usage:     "Set a lease. `leasetime` is a golang duration: https://golang.org/pkg/time/#ParseDuration",
-			Action:    set,
+			Usage:     "Set a lease. `leasetime` is 'persistent', or a golang duration: https://golang.org/pkg/time/#ParseDuration",
+			Description: `
+Examples:
+
+	ldhcpctl set 00:00:00:00:00:00 1.2.3.4 8m # expires in 8 minutes
+	ldhcpctl set 00:00:00:00:00:00 1.2.3.4 persistent # renews until deleted
+			`,
+			Action: set,
 		},
 		{
 			Name:      "list",
@@ -84,9 +91,9 @@ func getClient(ctx *cli.Context) (proto.LeaseControlClient, error) {
 func listLeases(leases []*proto.Lease) {
 	/// func NewWriter(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *Writer {
 	w := tabwriter.NewWriter(os.Stdout, 8, 2, 2, ' ', 0)
-	w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\t%s\n", "MAC", "IP", "Dynamic", "Lease End")))
+	w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\n", "MAC", "IP", "Dynamic", "Persistent", "Lease End")))
 	for _, lease := range leases {
-		w.Write([]byte(fmt.Sprintf("%s\t%s\t%v\t%s\n", lease.MACAddress, lease.IPAddress, lease.Dynamic, time.Unix(lease.LeaseEnd.Seconds, 0))))
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%v\t%v\t%s\n", lease.MACAddress, lease.IPAddress, lease.Dynamic, lease.Persistent, time.Unix(lease.LeaseEnd.Seconds, 0))))
 	}
 	w.Flush()
 }
@@ -120,15 +127,28 @@ func set(ctx *cli.Context) error {
 		return err
 	}
 
-	d, err := time.ParseDuration(ctx.Args()[2])
-	if err != nil {
-		return errors.Wrap(err, "while parsing lease end duration")
+	var (
+		leaseEnd   time.Duration
+		persistent bool
+	)
+
+	switch leaseDuration := strings.TrimSpace(ctx.Args()[2]); leaseDuration {
+	case "persistent":
+		leaseEnd = time.Hour
+		persistent = true
+	default:
+		var err error
+		leaseEnd, err = time.ParseDuration(ctx.Args()[2])
+		if err != nil {
+			return errors.Wrap(err, "while parsing lease end duration")
+		}
 	}
 
 	_, err = client.SetLease(context.Background(), &proto.Lease{
 		MACAddress: ctx.Args()[0],
 		IPAddress:  ctx.Args()[1],
-		LeaseEnd:   &timestamp.Timestamp{Seconds: time.Now().Add(d).Unix()},
+		Persistent: persistent,
+		LeaseEnd:   &timestamp.Timestamp{Seconds: time.Now().Add(leaseEnd).Unix()},
 	})
 	if err != nil {
 		return errors.Wrap(err, "error during lease set")

@@ -32,6 +32,7 @@ func toGRPC(lease *db.Lease) *Lease {
 		MACAddress: lease.MACAddress,
 		IPAddress:  lease.IPAddress,
 		Dynamic:    lease.Dynamic,
+		Persistent: lease.Persistent,
 		LeaseEnd:   &timestamp.Timestamp{Seconds: lease.LeaseEnd.Unix()},
 	}
 }
@@ -50,7 +51,7 @@ func (h *Handler) SetLease(ctx context.Context, lease *Lease) (*empty.Empty, err
 		return nil, status.Errorf(codes.InvalidArgument, "ip address is invalid")
 	}
 
-	if err := h.db.SetLease(mac, ip.To4(), false, time.Unix(lease.LeaseEnd.Seconds, 0)); err != nil {
+	if err := h.db.SetLease(mac, ip.To4(), false, lease.Persistent, time.Unix(lease.LeaseEnd.Seconds, 0)); err != nil {
 		return nil, status.Errorf(codes.Aborted, "failed to set lease: %v", err)
 	}
 
