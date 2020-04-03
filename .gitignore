@@ -5,3 +5,4 @@
 build
 *.db
 *.tar.gz
+version/generated.go
