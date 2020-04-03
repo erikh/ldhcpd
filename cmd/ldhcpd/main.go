@@ -18,6 +18,13 @@ import (
 func main() {
 	app := cli.NewApp()
 
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "disable, d",
+			Usage: "disable the DHCPd DHCP offering (control-plane only)",
+		},
+	}
+
 	app.Action = serve
 
 	if err := app.Run(os.Args); err != nil {
@@ -73,6 +80,10 @@ func serve(ctx *cli.Context) error {
 	installSignalHandler(ctx.App.Name, srv, l, handler)
 
 	go srv.Serve(l)
+
+	if ctx.GlobalBool("disable") {
+		select {} // will never reach dhcp listen
+	}
 
 	return dhcp4.ListenAndServeIf(ctx.Args()[0], handler)
 }
