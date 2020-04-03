@@ -35,6 +35,9 @@ $ ip addr
 # veth3 -> 10.0.20.50
 ```
 
+If you want to boot the control plane only, without serving DHCP, try the `-d`
+flag.
+
 ## Dependencies
 
 - https://github.com/box-builder/box which is a mruby-based docker image builder.
