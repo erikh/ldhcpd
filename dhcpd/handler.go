@@ -51,13 +51,23 @@ func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error
 		return nil, errors.Wrap(err, "error locating interface addresses")
 	}
 
-	if len(addrs) != 1 {
-		return nil, errors.New("interface must be configured with exactly one address (for now)")
+	var ip *net.IPNet
+
+	for _, addr := range addrs {
+		var ok bool
+		ip, ok = addr.(*net.IPNet)
+		if !ok {
+			return nil, errors.New("internal error resolving interface address")
+		}
+
+		if ip.IP.IsGlobalUnicast() {
+			logrus.Infof("Selecting %v to serve DHCP", ip.IP.String())
+			break
+		}
 	}
 
-	ip, ok := addrs[0].(*net.IPNet)
-	if !ok {
-		return nil, errors.New("internal error resolving interface address")
+	if ip == nil {
+		return nil, errors.Errorf("Could not find a suitable IP for serving on interface %v", interfaceName)
 	}
 
 	alloc, err := NewAllocator(db, config, nil)

@@ -12,6 +12,7 @@ import (
 	"code.hollensbe.org/erikh/ldhcpd/version"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
 )
@@ -43,11 +44,11 @@ func installSignalHandler(appName string, grpcS *grpc.Server, l net.Listener, ha
 			switch <-sigChan {
 			// FIXME add config reload as SIGUSR1 or SIGHUP
 			case syscall.SIGTERM, syscall.SIGINT:
-				fmt.Printf("Stopping %v...", appName)
+				logrus.Infof("Stopping %v...", appName)
 				grpcS.GracefulStop()
 				l.Close()
 				handler.Close()
-				fmt.Println("done.")
+				logrus.Infof("Done.")
 				os.Exit(0)
 			}
 		}
