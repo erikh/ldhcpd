@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.hollensbe.org/erikh/ldhcpd/proto"
+	"code.hollensbe.org/erikh/ldhcpd/version"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
@@ -17,9 +18,6 @@ import (
 )
 
 const (
-	// Version is the version of the program
-	Version = "0.1.0"
-
 	// Author is me
 	Author = "Erik Hollensbe <erik+git@hollensbe.org>"
 )
@@ -28,7 +26,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "ldhcpctl"
 	app.Usage = "Control ldhcpd"
-	app.Version = Version
+	app.Version = version.Version
 	app.Author = Author
 
 	app.Flags = []cli.Flag{

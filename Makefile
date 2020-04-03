@@ -1,6 +1,7 @@
 IMAGE_NAME ?= ldhcpd:testing
 CODE_PATH ?= /go/src/code.hollensbe.org/erikh/ldhcpd
 GO_TEST := sudo go test -v ./... -race -count 1
+VERSION ?= $(shell git rev-parse HEAD)
 
 DOCKER_CMD := docker run -it \
 	--cap-add NET_ADMIN \
@@ -13,9 +14,18 @@ DOCKER_CMD := docker run -it \
 	-v ${PWD}:$(CODE_PATH) \
 	$(IMAGE_NAME)
 
+release: distclean
+	GOBIN=${PWD}/build/ldhcpd-$$(cat VERSION) VERSION=$$(cat VERSION) make install
+	# FIXME include LICENSE.md
+	cp README.md example.conf build/ldhcpd-$$(cat VERSION)
+	cd build && tar cvzf ../ldhcpd-$$(cat ../VERSION).tar.gz ldhcpd-$$(cat ../VERSION)
+
+distclean:
+	rm -rf build
+
 install:
-	go install -v github.com/golang/protobuf/protoc-gen-go
-	go generate -v ./...
+	GOBIN=${GOPATH}/bin go install -v github.com/golang/protobuf/protoc-gen-go
+	VERSION=${VERSION} go generate -v ./...
 	go install -v ./...
 
 shell: build

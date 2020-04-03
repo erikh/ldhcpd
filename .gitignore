@@ -2,4 +2,7 @@
 .bashrc
 .go-cache
 .sqlite_history
+build
 *.db
+*.tar.gz
+version/generated.go

@@ -9,6 +9,7 @@ import (
 
 	"code.hollensbe.org/erikh/ldhcpd/dhcpd"
 	"code.hollensbe.org/erikh/ldhcpd/proto"
+	"code.hollensbe.org/erikh/ldhcpd/version"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -17,6 +18,8 @@ import (
 
 func main() {
 	app := cli.NewApp()
+
+	app.Version = version.Version
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
