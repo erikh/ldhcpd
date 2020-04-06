@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/erikh/go-transport v0.0.3
 	github.com/golang/protobuf v1.3.5
 	github.com/jinzhu/gorm v1.9.12
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

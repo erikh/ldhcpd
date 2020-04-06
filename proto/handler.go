@@ -21,6 +21,7 @@ type Handler struct {
 // Boot boots the grpc service
 func Boot(db *db.DB) *grpc.Server {
 	h := &Handler{db: db}
+
 	s := grpc.NewServer()
 	RegisterLeaseControlServer(s, h)
 

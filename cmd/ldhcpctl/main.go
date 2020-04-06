@@ -10,11 +10,11 @@ import (
 
 	"code.hollensbe.org/erikh/ldhcpd/proto"
 	"code.hollensbe.org/erikh/ldhcpd/version"
+	"github.com/erikh/go-transport"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -34,6 +34,21 @@ func main() {
 			Name:  "host, t",
 			Usage: "Set the host:port connection for GRPC",
 			Value: "localhost:7846",
+		},
+		cli.StringFlag{
+			Name:  "cert, c",
+			Usage: "Set the client certificate for authentication",
+			Value: "/etc/ldhcpd/client.pem",
+		},
+		cli.StringFlag{
+			Name:  "key, k",
+			Usage: "Set the client certificate key",
+			Value: "/etc/ldhcpd/client.key",
+		},
+		cli.StringFlag{
+			Name:  "ca",
+			Usage: "Set the certificate authority",
+			Value: "/etc/ldhcpd/rootCA.pem",
 		},
 	}
 
@@ -65,7 +80,7 @@ Examples:
 		{
 			Name:      "remove",
 			ArgsUsage: "[mac address]",
-			Usage:     "Removea lease by mac address",
+			Usage:     "Remove a lease by mac address",
 			Action:    remove,
 		},
 	}
@@ -78,7 +93,13 @@ Examples:
 
 func getClient(ctx *cli.Context) (proto.LeaseControlClient, error) {
 	// FIXME add security
-	cc, err := grpc.Dial(ctx.GlobalString("host"), grpc.WithInsecure())
+
+	cert, err := transport.LoadCert(ctx.GlobalString("ca"), ctx.GlobalString("cert"), ctx.GlobalString("key"), "")
+	if err != nil {
+		return nil, errors.Wrap(err, "while loading client certificate")
+	}
+
+	cc, err := transport.GRPCDial(cert, ctx.GlobalString("host"))
 	if err != nil {
 		return nil, errors.Wrap(err, "while configuring grpc client")
 	}

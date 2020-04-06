@@ -4,11 +4,18 @@ This is a DHCP service/daemon with very few features. It provides basic dynamic
 pool allocation as well as persistent, static leases. iPXE support does not
 exist but is planned.
 
-One thing light DHCPd offers that is novel, is a remote control plane powered
-over GRPC. This control plane can be embedded into your orchestration code or
-you can use the provided command-line tool to manipulate it from your shell.
-There is a golang client, and the protobufs are included in the source tree if
-you wish to generate clients for other languages.
+One thing Light DHCPd offers that is novel, is a remote control plane powered
+over GRPC, authenticated and encrypted by TLS (ecdsa certs are only supported
+currently) client certificates. This control plane can be embedded into your
+orchestration code or you can use the provided command-line tool to manipulate
+it from your shell. There is a golang client, and the protobufs are included
+in the source tree if you wish to generate clients for other languages.
+
+## Stability
+
+Light DHCPd has been powering my network for over a week!
+
+(Seriously, you do not want to use this in production yet.)
 
 ## Instructions
 
@@ -19,11 +26,15 @@ you wish to generate clients for other languages.
     a bridge; afterwards `veth1` will be available for running a `ldhcpd` on, and
     `veth3` will be available for running a `dhclient` on.
 
+**NOTE**: The following instructions install https://github.com/box-builder/box
+on first run to build the images, will require `sudo` for that (but nothing
+else). If you don't want to run `sudo` to install box, install it in your
+`$PATH` somewhere and try again.
+
 Assuming you're not crazy enough to try this on your own network, try this at
 your shell instead:
 
 ```bash
-# installs box to build the images, will require sudo for that (but nothing else)
 $ make shell
 # <inside of container>
 $ make interfaces
