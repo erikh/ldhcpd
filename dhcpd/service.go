@@ -1,8 +1,6 @@
 package dhcpd
 
 import (
-	"time"
-
 	"github.com/krolaw/dhcp4"
 	"github.com/sirupsen/logrus"
 )
@@ -19,7 +17,7 @@ func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options
 			return nil
 		}
 
-		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, ip, 24*time.Hour, h.options.SelectOrderOrAll(nil))
+		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, ip, h.config.LeaseDuration, h.options.SelectOrderOrAll(nil))
 	case dhcp4.Request:
 		logrus.Infof("received request for %v from %v", req.CIAddr(), req.CHAddr())
 
@@ -30,7 +28,7 @@ func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options
 		}
 
 		if req.CIAddr().IsUnspecified() || req.CIAddr().Equal(ip) {
-			return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, ip, 24*time.Hour, h.options.SelectOrderOrAll(nil))
+			return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, ip, h.config.LeaseDuration, h.options.SelectOrderOrAll(nil))
 		}
 
 		return nil

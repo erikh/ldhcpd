@@ -120,7 +120,7 @@ func TestBasicACK(t *testing.T) {
 	time.Sleep(time.Second)
 
 	config := Config{
-		LeaseDuration: defaultLeaseDuration,
+		LeaseDuration: 5 * time.Second,
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",
@@ -150,6 +150,29 @@ func TestBasicACK(t *testing.T) {
 
 	go dhcp4.ListenAndServeIf("dhcpd0", handler)
 
+	ip := testDHCP(t)
+	if !ip.Equal(net.ParseIP("10.0.20.50")) {
+		t.Fatalf("Was not the expected ip: was %v", ip)
+	}
+
+	ip = testDHCP(t)
+	if !ip.Equal(net.ParseIP("10.0.20.50")) {
+		t.Fatalf("Was not the expected ip: was %v", ip)
+	}
+
+	time.Sleep(5 * time.Second) // ensure lease is expired
+
+	// I know this is especially shitty behavior and could be done better. I will
+	// add a shadow lease table eventually, just making this note so if anyone
+	// reads this code they don't think I'm a massive dimwit (at least for this
+	// reason). This is just a simpler solution; maintain the lease, or lose it.
+	ip = testDHCP(t)
+	if !ip.Equal(net.ParseIP("10.0.20.51")) {
+		t.Fatalf("Was not the expected IP: was %v", ip)
+	}
+}
+
+func testDHCP(t *testing.T) net.IP {
 	cmd := exec.Command("dhclient", "-1", "-4", "-d", "-v", "dhclient0")
 
 	stdout, err := cmd.StdoutPipe()
@@ -191,7 +214,26 @@ func TestBasicACK(t *testing.T) {
 		t.Fatalf("Invalid addresses configured")
 	}
 
-	if !list[0].IP.Equal(net.ParseIP("10.0.20.50")) {
-		t.Fatalf("Was not the expected ip: was %v", list[0].IP)
+	ip := list[0].IP
+
+	if err := flushAddrs(dhc); err != nil {
+		t.Fatalf("While flushing addresses: %v", err)
 	}
+
+	return ip
+}
+
+func flushAddrs(dhc netlink.Link) error {
+	list, err := netlink.AddrList(dhc, netlink.FAMILY_V4)
+	if err != nil {
+		return errors.Wrap(err, "listing addresses")
+	}
+
+	for _, item := range list {
+		if err := netlink.AddrDel(dhc, &item); err != nil {
+			return errors.Wrap(err, "deleting address")
+		}
+	}
+
+	return nil
 }
