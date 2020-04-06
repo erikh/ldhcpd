@@ -17,8 +17,8 @@ const (
 	defaultDBFile        = "ldhcpd.db"
 	defaultLeaseDuration = 24 * time.Hour
 	defaultCAFile        = "/etc/ldhcpd/rootCA.pem"
-	defaultCertFile      = "/etc/ldhcpd/ldhcpd.pem"
-	defaultKeyFile       = "/etc/ldhcpd/ldhcpd.key"
+	defaultCertFile      = "/etc/ldhcpd/server.pem"
+	defaultKeyFile       = "/etc/ldhcpd/server.key"
 )
 
 // Range is for IP ranges
