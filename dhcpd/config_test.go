@@ -20,6 +20,11 @@ func TestConfig(t *testing.T) {
 				To:   "10.0.20.100",
 			},
 			DBFile: defaultDBFile,
+			Certificate: Certificate{
+				CAFile:   defaultCAFile,
+				CertFile: defaultCertFile,
+				KeyFile:  defaultKeyFile,
+			},
 		},
 		"no dns": {
 			LeaseDuration: defaultLeaseDuration,
@@ -30,6 +35,11 @@ func TestConfig(t *testing.T) {
 				To:   "10.0.20.100",
 			},
 			DBFile: defaultDBFile,
+			Certificate: Certificate{
+				CAFile:   defaultCAFile,
+				CertFile: defaultCertFile,
+				KeyFile:  defaultKeyFile,
+			},
 		},
 		"lease duration populated": {
 			LeaseDuration: time.Hour,
@@ -43,6 +53,11 @@ func TestConfig(t *testing.T) {
 				To:   "10.0.20.100",
 			},
 			DBFile: defaultDBFile,
+			Certificate: Certificate{
+				CAFile:   defaultCAFile,
+				CertFile: defaultCertFile,
+				KeyFile:  defaultKeyFile,
+			},
 		},
 		"db file populated": {
 			LeaseDuration: defaultLeaseDuration,
@@ -56,6 +71,29 @@ func TestConfig(t *testing.T) {
 				To:   "10.0.20.100",
 			},
 			DBFile: "foo.db",
+			Certificate: Certificate{
+				CAFile:   defaultCAFile,
+				CertFile: defaultCertFile,
+				KeyFile:  defaultKeyFile,
+			},
+		},
+		"cert configuration populated": {
+			LeaseDuration: defaultLeaseDuration,
+			DNSServers: []string{
+				"10.0.0.1",
+				"1.1.1.1",
+			},
+			Gateway: "10.0.20.1",
+			DynamicRange: Range{
+				From: "10.0.20.50",
+				To:   "10.0.20.100",
+			},
+			DBFile: defaultDBFile,
+			Certificate: Certificate{
+				CAFile:   "cacert.pem",
+				CertFile: "server.pem",
+				KeyFile:  "server.key",
+			},
 		},
 	}
 
@@ -100,6 +138,22 @@ func TestConfig(t *testing.T) {
 			DynamicRange: Range{
 				From: "10.0.20.50",
 				To:   "10.0.20.100",
+			},
+		},
+		"cert configuration populated": {
+			DNSServers: []string{
+				"10.0.0.1",
+				"1.1.1.1",
+			},
+			Gateway: "10.0.20.1",
+			DynamicRange: Range{
+				From: "10.0.20.50",
+				To:   "10.0.20.100",
+			},
+			Certificate: Certificate{
+				CAFile:   "cacert.pem",
+				CertFile: "server.pem",
+				KeyFile:  "server.key",
 			},
 		},
 	}

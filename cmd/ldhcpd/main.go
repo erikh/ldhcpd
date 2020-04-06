@@ -10,6 +10,7 @@ import (
 	"code.hollensbe.org/erikh/ldhcpd/dhcpd"
 	"code.hollensbe.org/erikh/ldhcpd/proto"
 	"code.hollensbe.org/erikh/ldhcpd/version"
+	"github.com/erikh/go-transport"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -76,8 +77,13 @@ func serve(ctx *cli.Context) error {
 		return errors.Wrap(err, "while configuring dhcpd")
 	}
 
+	cert, err := config.Certificate.NewCert()
+	if err != nil {
+		return errors.Wrap(err, "while configuring transport credentials")
+	}
+
 	srv := proto.Boot(db)
-	l, err := net.Listen("tcp", "localhost:7846")
+	l, err := transport.Listen(cert, "tcp", "localhost:7846")
 	if err != nil {
 		return errors.Wrap(err, "while configuring grpc listener")
 	}

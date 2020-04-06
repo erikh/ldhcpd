@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"code.hollensbe.org/erikh/ldhcpd/db"
+	"github.com/erikh/go-transport"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -15,6 +16,9 @@ import (
 const (
 	defaultDBFile        = "ldhcpd.db"
 	defaultLeaseDuration = 24 * time.Hour
+	defaultCAFile        = "/etc/ldhcpd/rootCA.pem"
+	defaultCertFile      = "/etc/ldhcpd/ldhcpd.pem"
+	defaultKeyFile       = "/etc/ldhcpd/ldhcpd.key"
 )
 
 // Range is for IP ranges
@@ -52,6 +56,7 @@ type Config struct {
 	DBFile        string        `yaml:"db_file"`
 	DynamicRange  Range         `yaml:"dynamic_range"`
 	LeaseDuration time.Duration `yaml:"lease_duration"`
+	Certificate   Certificate   `yaml:"certificate"`
 }
 
 // ParseConfig parses the configuration in the file and returns it.
@@ -95,6 +100,18 @@ func (c *Config) validateAndFix() error {
 		c.DBFile = defaultDBFile
 	}
 
+	if c.Certificate.CertFile == "" {
+		c.Certificate.CertFile = defaultCertFile
+	}
+
+	if c.Certificate.KeyFile == "" {
+		c.Certificate.KeyFile = defaultKeyFile
+	}
+
+	if c.Certificate.CAFile == "" {
+		c.Certificate.CAFile = defaultCAFile
+	}
+
 	if c.LeaseDuration == 0 {
 		c.LeaseDuration = defaultLeaseDuration
 	}
@@ -120,4 +137,16 @@ func (c Config) DNS() []byte {
 // NewDB creates a new DB connection and migrates it if necessary.
 func (c Config) NewDB() (*db.DB, error) {
 	return db.NewDB(c.DBFile)
+}
+
+// Certificate iconifies the certificate used to authenticate GRPC connections.
+type Certificate struct {
+	CAFile   string `yaml:"ca"`
+	CertFile string `yaml:"cert"`
+	KeyFile  string `yaml:"key"`
+}
+
+// NewCert returns a transport interface suitable for use with GRPC servers.
+func (crt Certificate) NewCert() (*transport.Cert, error) {
+	return transport.LoadCert(crt.CAFile, crt.CertFile, crt.KeyFile, "")
 }
