@@ -39,40 +39,45 @@ func NewAllocator(db *db.DB, c Config, initial net.IP) (*Allocator, error) {
 // already an IP present in the leases table for this mac, to renew the lease
 // if necessary.
 func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
+	now := time.Now()
 	// FIXME returning lease end here may help with some distributed race conditions we're seeing
 	l, err := a.db.GetLease(mac)
 	if err == nil {
-		if l.LeaseEnd.Before(time.Now()) {
-			if renew || l.Persistent {
-				leaseEnd := time.Now().Add(a.config.Lease.Duration)
-				l, err := a.db.RenewLease(mac, leaseEnd, leaseEnd.Add(a.config.Lease.GracePeriod))
-				if err != nil {
-					return nil, errors.Wrapf(err, "could not renew lease for mac [%v] ip [%v]", mac, a.lastIP)
-				}
-
-				return l.IP(), nil
-			} // fall through if we don't renew, this probably means the host will get a new IP.
-		} else {
-			return l.IP(), nil
+		if (renew && (l.LeaseEnd.Before(now) || l.LeaseGraceEnd.Before(now))) || l.Persistent {
+			leaseEnd := now.Add(a.config.Lease.Duration)
+			l, err = a.db.RenewLease(mac, leaseEnd, leaseEnd.Add(a.config.Lease.GracePeriod))
+			if err != nil {
+				return nil, errors.Wrapf(err, "could not renew lease for mac [%v] ip [%v]", mac, a.lastIP)
+			}
 		}
-	}
 
+		return l.IP(), nil
+	}
 	first, last := a.config.DynamicRange.Dimensions()
 
 	a.lastIPMutex.Lock()
 	defer a.lastIPMutex.Unlock()
 
 	// calculate these ahead of time to save a few cycles
-	leaseEnd := time.Now().Add(a.config.Lease.Duration)
+	leaseEnd := now.Add(a.config.Lease.Duration)
 	gracePeriodEnd := leaseEnd.Add(a.config.Lease.GracePeriod)
 
-	var foundFirst bool
+	var foundFirst, foundFirstClearedGrace bool
 	for {
 		ip := dhcp4.IPAdd(a.lastIP, 1)
 
 		if !dhcp4.IPInRange(first, last, ip) {
 			if foundFirst {
-				return nil, ErrRangeExhausted
+				if foundFirstClearedGrace {
+					return nil, ErrRangeExhausted
+				}
+
+				_, err := a.db.PurgeLeases(true)
+				if err != nil {
+					return nil, errors.Wrap(err, "trying to clean up lease table")
+				}
+
+				foundFirstClearedGrace = true
 			}
 			a.lastIP = first
 			foundFirst = true

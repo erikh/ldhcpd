@@ -22,7 +22,7 @@ type Handler struct {
 func (h *Handler) purgeLeases() {
 	for {
 		time.Sleep(time.Second)
-		count, err := h.db.PurgeLeases()
+		count, err := h.db.PurgeLeases(false)
 		if err != nil {
 			logrus.Errorf("While purging leases: %v", err)
 			continue

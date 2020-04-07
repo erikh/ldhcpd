@@ -28,7 +28,7 @@ func TestDBLeaseCRUD(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	count, err := db.PurgeLeases()
+	count, err := db.PurgeLeases(false)
 	if err != nil {
 		t.Fatalf("could not purge leases: %v", err)
 	}

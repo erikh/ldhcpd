@@ -1,6 +1,7 @@
 package dhcpd
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -154,15 +155,17 @@ func TestBasicACK(t *testing.T) {
 
 	ip := testDHCP(t)
 	if !ip.Equal(net.ParseIP("10.0.20.50")) {
+		dumpInterfaces()
 		t.Fatalf("Was not the expected ip: was %v", ip)
 	}
 
 	ip = testDHCP(t)
 	if !ip.Equal(net.ParseIP("10.0.20.50")) {
+		dumpInterfaces()
 		t.Fatalf("Was not the expected ip: was %v", ip)
 	}
 
-	time.Sleep(5 * time.Second) // ensure lease is expired
+	time.Sleep(6 * time.Second) // ensure lease is expired
 
 	// I know this is especially shitty behavior and could be done better. I will
 	// add a shadow lease table eventually, just making this note so if anyone
@@ -170,8 +173,14 @@ func TestBasicACK(t *testing.T) {
 	// reason). This is just a simpler solution; maintain the lease, or lose it.
 	ip = testDHCP(t)
 	if !ip.Equal(net.ParseIP("10.0.20.51")) {
+		dumpInterfaces()
 		t.Fatalf("Was not the expected IP: was %v", ip)
 	}
+}
+
+func dumpInterfaces() {
+	out, _ := exec.Command("ip", "addr").CombinedOutput()
+	fmt.Println(string(out))
 }
 
 func testDHCP(t *testing.T) net.IP {
@@ -213,6 +222,7 @@ func testDHCP(t *testing.T) net.IP {
 	}
 
 	if len(list) != 1 {
+		dumpInterfaces()
 		t.Fatalf("Invalid addresses configured")
 	}
 

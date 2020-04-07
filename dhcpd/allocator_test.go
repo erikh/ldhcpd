@@ -63,7 +63,7 @@ func TestAllocator(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond) // lease duration
 
-	count, err := db.PurgeLeases()
+	count, err := db.PurgeLeases(false)
 	if err != nil {
 		t.Fatalf("could not purge leases: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestAllocator(t *testing.T) {
 		t.Fatalf("Could not allocate second mac: %v", err)
 	}
 
-	count, err = db.PurgeLeases()
+	count, err = db.PurgeLeases(false)
 	if err != nil {
 		t.Fatalf("could not purge leases: %v", err)
 	}
@@ -148,7 +148,7 @@ func TestAllocatorCycles(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	count, err := db.PurgeLeases()
+	count, err := db.PurgeLeases(false)
 	if err != nil {
 		t.Fatalf("could not purge leases: %v", err)
 	}
@@ -165,7 +165,8 @@ func TestAllocatorCycles(t *testing.T) {
 func TestAllocatorGaps(t *testing.T) {
 	config := Config{
 		Lease: Lease{
-			Duration: 100 * time.Millisecond,
+			Duration:    200 * time.Millisecond,
+			GracePeriod: 10 * time.Minute, // an obnoxious limit intended to blow out the purge routine
 		},
 		DNSServers: []string{
 			"10.0.0.1",
@@ -205,7 +206,7 @@ func TestAllocatorGaps(t *testing.T) {
 		}
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	for ip, mac := range keep {
 		newip, err := a.Allocate(mac, true)
@@ -218,7 +219,7 @@ func TestAllocatorGaps(t *testing.T) {
 		}
 	}
 
-	count, err := db.PurgeLeases()
+	count, err := db.PurgeLeases(true)
 	if err != nil {
 		t.Fatalf("Could not purge leases: %v", err)
 	}
@@ -239,6 +240,15 @@ func TestAllocatorGaps(t *testing.T) {
 		}
 
 		keep[ip.String()] = mac
+	}
+
+	// this is needed to keep the pool from timing out while between this and
+	// that, no purge will happen so the leases are safe.
+	for _, mac := range keep {
+		_, err := a.Allocate(mac, true)
+		if err != nil {
+			t.Fatalf("While refreshing ip addresses: %v", err)
+		}
 	}
 
 	if ip, err := a.Allocate(testutil.RandomMAC(), false); err != ErrRangeExhausted {
@@ -282,7 +292,7 @@ func TestAllocatorPersistent(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	count, err := db.PurgeLeases()
+	count, err := db.PurgeLeases(false)
 	if err != nil {
 		t.Fatalf("Error purging leases: %v", err)
 	}
