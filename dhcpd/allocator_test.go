@@ -276,7 +276,7 @@ func TestAllocatorPersistent(t *testing.T) {
 	}
 
 	mac := testutil.RandomMAC()
-	if err := db.SetLease(mac, net.ParseIP("1.2.3.4"), false, true, time.Now()); err != nil {
+	if err := db.SetLease(mac, net.ParseIP("1.2.3.4"), false, true, time.Now(), time.Now()); err != nil {
 		t.Fatalf("Error setting lease: %v", err)
 	}
 

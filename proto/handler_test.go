@@ -160,6 +160,9 @@ func TestLeaseHandlerSetGetLease(t *testing.T) {
 				LeaseEnd: &timestamp.Timestamp{
 					Seconds: leaseEnd,
 				},
+				LeaseGraceEnd: &timestamp.Timestamp{
+					Seconds: leaseEnd,
+				},
 			})
 		if err != nil {
 			t.Fatalf("Error while inserting mac/ip %s/%s: %v", mac, ip, err)

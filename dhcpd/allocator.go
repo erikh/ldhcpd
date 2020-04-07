@@ -39,11 +39,13 @@ func NewAllocator(db *db.DB, c Config, initial net.IP) (*Allocator, error) {
 // already an IP present in the leases table for this mac, to renew the lease
 // if necessary.
 func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
+	// FIXME returning lease end here may help with some distributed race conditions we're seeing
 	l, err := a.db.GetLease(mac)
 	if err == nil {
 		if l.LeaseEnd.Before(time.Now()) {
 			if renew || l.Persistent {
-				l, err := a.db.RenewLease(mac, time.Now().Add(a.config.Lease.Duration))
+				leaseEnd := time.Now().Add(a.config.Lease.Duration)
+				l, err := a.db.RenewLease(mac, leaseEnd, leaseEnd.Add(a.config.Lease.GracePeriod))
 				if err != nil {
 					return nil, errors.Wrapf(err, "could not renew lease for mac [%v] ip [%v]", mac, a.lastIP)
 				}
@@ -60,6 +62,10 @@ func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 	a.lastIPMutex.Lock()
 	defer a.lastIPMutex.Unlock()
 
+	// calculate these ahead of time to save a few cycles
+	leaseEnd := time.Now().Add(a.config.Lease.Duration)
+	gracePeriodEnd := leaseEnd.Add(a.config.Lease.GracePeriod)
+
 	var foundFirst bool
 	for {
 		ip := dhcp4.IPAdd(a.lastIP, 1)
@@ -74,7 +80,7 @@ func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 			a.lastIP = ip
 		}
 
-		if err := a.db.SetLease(mac, a.lastIP, true, false, time.Now().Add(a.config.Lease.Duration)); err != nil {
+		if err := a.db.SetLease(mac, a.lastIP, true, false, leaseEnd, gracePeriodEnd); err != nil {
 			continue
 		}
 
