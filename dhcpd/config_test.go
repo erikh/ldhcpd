@@ -9,7 +9,9 @@ import (
 func TestConfig(t *testing.T) {
 	outConfigs := map[string]Config{
 		"basic": {
-			LeaseDuration: defaultLeaseDuration,
+			Lease: Lease{
+				Duration: defaultLeaseDuration,
+			},
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",
@@ -27,9 +29,11 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		"no dns": {
-			LeaseDuration: defaultLeaseDuration,
-			DNSServers:    []string{},
-			Gateway:       "10.0.20.1",
+			Lease: Lease{
+				Duration: defaultLeaseDuration,
+			},
+			DNSServers: []string{},
+			Gateway:    "10.0.20.1",
 			DynamicRange: Range{
 				From: "10.0.20.50",
 				To:   "10.0.20.100",
@@ -42,7 +46,9 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		"lease duration populated": {
-			LeaseDuration: time.Hour,
+			Lease: Lease{
+				Duration: time.Hour,
+			},
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",
@@ -60,7 +66,9 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		"db file populated": {
-			LeaseDuration: defaultLeaseDuration,
+			Lease: Lease{
+				Duration: defaultLeaseDuration,
+			},
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",
@@ -78,7 +86,9 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		"cert configuration populated": {
-			LeaseDuration: defaultLeaseDuration,
+			Lease: Lease{
+				Duration: defaultLeaseDuration,
+			},
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",
@@ -129,7 +139,9 @@ func TestConfig(t *testing.T) {
 			DBFile: "foo.db",
 		},
 		"lease duration populated": {
-			LeaseDuration: time.Hour,
+			Lease: Lease{
+				Duration: time.Hour,
+			},
 			DNSServers: []string{
 				"10.0.0.1",
 				"1.1.1.1",

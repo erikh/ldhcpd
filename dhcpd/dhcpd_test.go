@@ -120,7 +120,9 @@ func TestBasicACK(t *testing.T) {
 	time.Sleep(time.Second)
 
 	config := Config{
-		LeaseDuration: 5 * time.Second,
+		Lease: Lease{
+			Duration: 5 * time.Second,
+		},
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",

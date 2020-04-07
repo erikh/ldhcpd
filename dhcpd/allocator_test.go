@@ -11,7 +11,9 @@ import (
 
 func TestAllocator(t *testing.T) {
 	config := Config{
-		LeaseDuration: 100 * time.Millisecond,
+		Lease: Lease{
+			Duration: 100 * time.Millisecond,
+		},
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",
@@ -100,7 +102,9 @@ func TestAllocator(t *testing.T) {
 
 func TestAllocatorCycles(t *testing.T) {
 	config := Config{
-		LeaseDuration: 100 * time.Millisecond,
+		Lease: Lease{
+			Duration: 100 * time.Millisecond,
+		},
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",
@@ -160,7 +164,9 @@ func TestAllocatorCycles(t *testing.T) {
 
 func TestAllocatorGaps(t *testing.T) {
 	config := Config{
-		LeaseDuration: 100 * time.Millisecond,
+		Lease: Lease{
+			Duration: 100 * time.Millisecond,
+		},
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",
@@ -242,7 +248,9 @@ func TestAllocatorGaps(t *testing.T) {
 
 func TestAllocatorPersistent(t *testing.T) {
 	config := Config{
-		LeaseDuration: 100 * time.Millisecond,
+		Lease: Lease{
+			Duration: 100 * time.Millisecond,
+		},
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",

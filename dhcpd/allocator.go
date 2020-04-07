@@ -43,7 +43,7 @@ func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 	if err == nil {
 		if l.LeaseEnd.Before(time.Now()) {
 			if renew || l.Persistent {
-				l, err := a.db.RenewLease(mac, time.Now().Add(a.config.LeaseDuration))
+				l, err := a.db.RenewLease(mac, time.Now().Add(a.config.Lease.Duration))
 				if err != nil {
 					return nil, errors.Wrapf(err, "could not renew lease for mac [%v] ip [%v]", mac, a.lastIP)
 				}
@@ -74,7 +74,7 @@ func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 			a.lastIP = ip
 		}
 
-		if err := a.db.SetLease(mac, a.lastIP, true, false, time.Now().Add(a.config.LeaseDuration)); err != nil {
+		if err := a.db.SetLease(mac, a.lastIP, true, false, time.Now().Add(a.config.Lease.Duration)); err != nil {
 			continue
 		}
 

@@ -49,14 +49,21 @@ func (r Range) Dimensions() (net.IP, net.IP) {
 	return net.ParseIP(r.From).To4(), net.ParseIP(r.To).To4()
 }
 
+// Lease is a lease for a DHCP-allocated address.
+type Lease struct {
+	Duration    time.Duration `yaml:"duration"`
+	GracePeriod time.Duration `yaml:"grace_period"`
+}
+
 // Config is the configuration of the dhcpd service
 type Config struct {
-	DNSServers    []string      `yaml:"dns_servers"`
-	Gateway       string        `yaml:"gateway"`
-	DBFile        string        `yaml:"db_file"`
-	DynamicRange  Range         `yaml:"dynamic_range"`
-	LeaseDuration time.Duration `yaml:"lease_duration"`
-	Certificate   Certificate   `yaml:"certificate"`
+	DNSServers   []string `yaml:"dns_servers"`
+	Gateway      string   `yaml:"gateway"`
+	DBFile       string   `yaml:"db_file"`
+	DynamicRange Range    `yaml:"dynamic_range"`
+	Lease        Lease    `yaml:"lease"`
+
+	Certificate Certificate `yaml:"certificate"`
 }
 
 // ParseConfig parses the configuration in the file and returns it.
@@ -112,8 +119,8 @@ func (c *Config) validateAndFix() error {
 		c.Certificate.CAFile = defaultCAFile
 	}
 
-	if c.LeaseDuration == 0 {
-		c.LeaseDuration = defaultLeaseDuration
+	if c.Lease.Duration == 0 {
+		c.Lease.Duration = defaultLeaseDuration
 	}
 
 	return nil
