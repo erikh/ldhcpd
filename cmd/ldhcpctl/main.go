@@ -70,6 +70,13 @@ Examples:
 	ldhcpctl set 00:00:00:00:00:00 1.2.3.4 persistent # renews until deleted
 			`,
 			Action: set,
+			Flags: []cli.Flag{
+				cli.DurationFlag{
+					Name:  "grace-period, gp",
+					Usage: "Grace period between lease expiration and hard reclaim time",
+					Value: 8 * time.Hour,
+				},
+			},
 		},
 		{
 			Name:      "list",
@@ -92,8 +99,6 @@ Examples:
 }
 
 func getClient(ctx *cli.Context) (proto.LeaseControlClient, error) {
-	// FIXME add security
-
 	cert, err := transport.LoadCert(ctx.GlobalString("ca"), ctx.GlobalString("cert"), ctx.GlobalString("key"), "")
 	if err != nil {
 		return nil, errors.Wrap(err, "while loading client certificate")
@@ -110,9 +115,9 @@ func getClient(ctx *cli.Context) (proto.LeaseControlClient, error) {
 func listLeases(leases []*proto.Lease) {
 	/// func NewWriter(output io.Writer, minwidth, tabwidth, padding int, padchar byte, flags uint) *Writer {
 	w := tabwriter.NewWriter(os.Stdout, 8, 2, 2, ' ', 0)
-	w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\n", "MAC", "IP", "Dynamic", "Persistent", "Lease End")))
+	w.Write([]byte(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", "MAC", "IP", "Dynamic", "Persistent", "Lease End", "Grace Period End")))
 	for _, lease := range leases {
-		w.Write([]byte(fmt.Sprintf("%s\t%s\t%v\t%v\t%s\n", lease.MACAddress, lease.IPAddress, lease.Dynamic, lease.Persistent, time.Unix(lease.LeaseEnd.Seconds, 0))))
+		w.Write([]byte(fmt.Sprintf("%s\t%s\t%v\t%v\t%s\t%s\n", lease.MACAddress, lease.IPAddress, lease.Dynamic, lease.Persistent, time.Unix(lease.LeaseEnd.Seconds, 0), time.Unix(lease.LeaseGraceEnd.Seconds, 0))))
 	}
 	w.Flush()
 }
@@ -151,8 +156,9 @@ func set(ctx *cli.Context) error {
 		persistent bool
 	)
 
-	switch leaseDuration := strings.TrimSpace(ctx.Args()[2]); leaseDuration {
-	case "persistent":
+	leaseDuration := strings.TrimSpace(ctx.Args()[2])
+	switch {
+	case strings.HasPrefix(leaseDuration, "persist"):
 		leaseEnd = time.Hour
 		persistent = true
 	default:
@@ -164,10 +170,11 @@ func set(ctx *cli.Context) error {
 	}
 
 	_, err = client.SetLease(context.Background(), &proto.Lease{
-		MACAddress: ctx.Args()[0],
-		IPAddress:  ctx.Args()[1],
-		Persistent: persistent,
-		LeaseEnd:   &timestamp.Timestamp{Seconds: time.Now().Add(leaseEnd).Unix()},
+		MACAddress:    ctx.Args()[0],
+		IPAddress:     ctx.Args()[1],
+		Persistent:    persistent,
+		LeaseEnd:      &timestamp.Timestamp{Seconds: time.Now().Add(leaseEnd).Unix()},
+		LeaseGraceEnd: &timestamp.Timestamp{Seconds: time.Now().Add(ctx.Duration("grace-period")).Unix()},
 	})
 	if err != nil {
 		return errors.Wrap(err, "error during lease set")
