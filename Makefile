@@ -53,6 +53,15 @@ interfaces: docker-check clean-interfaces
 	for i in veth0 veth1 veth2 veth3; do sudo ip link set dev $$i up; done
 	sudo ip addr add dev veth1 10.0.20.1/24
 
+start: docker-check interfaces
+	sudo ldhcpd veth1 example.conf &
+
+stop: docker-check
+	sudo pkill ldhcpd
+
+get-ip: docker-check
+	sudo dhclient -d -1 -v veth3
+
 get-box:
 	@if [ ! -f "$(shell which box)" ]; \
 	then \
