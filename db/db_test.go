@@ -18,17 +18,17 @@ func TestDBLeaseCRUD(t *testing.T) {
 	defer db.Close()
 	defer os.Remove("test.db")
 
-	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Second), time.Now()); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 
-	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.2"), false, false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.2"), false, false, time.Now().Add(time.Second), time.Now()); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 
 	time.Sleep(time.Second)
 
-	count, err := db.PurgeLeases()
+	count, err := db.PurgeLeases(false)
 	if err != nil {
 		t.Fatalf("could not purge leases: %v", err)
 	}
@@ -37,15 +37,15 @@ func TestDBLeaseCRUD(t *testing.T) {
 		t.Fatalf("Did not purge the right number of leases, expected 2, got %d", count)
 	}
 
-	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Second), time.Now()); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 
-	if _, err := db.RenewLease(testutil.FakeMAC2, time.Now().Add(time.Minute)); err == nil {
+	if _, err := db.RenewLease(testutil.FakeMAC2, time.Now().Add(time.Minute), time.Now()); err == nil {
 		t.Fatal("did not error renewing lease for missing mac")
 	}
 
-	lease, err := db.RenewLease(testutil.FakeMAC, time.Now().Add(time.Minute))
+	lease, err := db.RenewLease(testutil.FakeMAC, time.Now().Add(time.Minute), time.Now())
 	if err != nil {
 		t.Fatalf("could not renew lease: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestDBLeaseCRUD(t *testing.T) {
 		t.Fatal("Lease ending was not updated")
 	}
 
-	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.2"), false, false, time.Now().Add(time.Second)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.2"), false, false, time.Now().Add(time.Second), time.Now()); err != nil {
 		t.Fatalf("could not set basic lease: %v", err)
 	}
 }
@@ -74,7 +74,7 @@ func TestDBLease(t *testing.T) {
 		t.Fatalf("Found lease where there shouldn't be one")
 	}
 
-	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Hour)); err != nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Hour), time.Now()); err != nil {
 		t.Fatalf("Found lease where there shouldn't be one")
 	}
 
@@ -96,11 +96,11 @@ func TestDBLease(t *testing.T) {
 		t.Fatalf("Mac address is not equal in lease: %v", tmpMac.String())
 	}
 
-	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Hour)); err == nil {
+	if err := db.SetLease(testutil.FakeMAC2, net.ParseIP("10.0.0.1"), false, false, time.Now().Add(time.Hour), time.Now()); err == nil {
 		t.Fatal("Should not have been able to create a second lease for 10.0.0.1")
 	}
 
-	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.2"), false, false, time.Now().Add(time.Hour)); err == nil {
+	if err := db.SetLease(testutil.FakeMAC, net.ParseIP("10.0.0.2"), false, false, time.Now().Add(time.Hour), time.Now()); err == nil {
 		t.Fatalf("Should not have been able to create a second lease for %v", testutil.FakeMAC.String())
 	}
 }

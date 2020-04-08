@@ -14,24 +14,24 @@ func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options
 		ip, err := h.allocator.Allocate(req.CHAddr(), true)
 		if err != nil {
 			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
-			return nil
+			return dhcp4.ReplyPacket(req, dhcp4.NAK, h.ip, req.CIAddr(), 0, nil)
 		}
 
-		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, ip, h.config.LeaseDuration, h.options.SelectOrderOrAll(nil))
+		logrus.Infof("Generated lease for mac [%v] ip [%v]", req.CHAddr(), ip)
+
+		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, ip, h.config.Lease.Duration, h.options.SelectOrderOrAll(nil))
 	case dhcp4.Request:
 		logrus.Infof("received request for %v from %v", req.CIAddr(), req.CHAddr())
 
 		ip, err := h.allocator.Allocate(req.CHAddr(), true)
 		if err != nil {
 			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
-			return nil
+			return dhcp4.ReplyPacket(req, dhcp4.NAK, h.ip, req.CIAddr(), 0, nil)
 		}
 
-		if req.CIAddr().IsUnspecified() || req.CIAddr().Equal(ip) {
-			return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, ip, h.config.LeaseDuration, h.options.SelectOrderOrAll(nil))
-		}
+		logrus.Infof("Lease obtained for mac [%v] ip [%v]", req.CHAddr(), ip)
 
-		return nil
+		return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, ip, h.config.Lease.Duration, h.options.SelectOrderOrAll(nil))
 	case dhcp4.Release:
 		logrus.Info("received release")
 	case dhcp4.Decline:

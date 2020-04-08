@@ -10,7 +10,7 @@ service LeaseControl {
   rpc GetLease(MACAddress)              returns (Lease)                 {};
   rpc ListLeases(google.protobuf.Empty) returns (Leases)                {};
   rpc RemoveLease(MACAddress)           returns (google.protobuf.Empty) {};
-  // renew lease
+  // FIXME add renew lease
 }
 
 message MACAddress {
@@ -18,11 +18,12 @@ message MACAddress {
 }
 
 message Lease {
-  string                    MACAddress = 1;
-  string                    IPAddress  = 2;
-  google.protobuf.Timestamp LeaseEnd   = 3;
-  bool                      Dynamic    = 4; // ignored for SetLease
-  bool                      Persistent = 5;
+  string                    MACAddress    = 1;
+  string                    IPAddress     = 2;
+  google.protobuf.Timestamp LeaseEnd      = 3;
+  bool                      Dynamic       = 4; // ignored for SetLease
+  bool                      Persistent    = 5;
+  google.protobuf.Timestamp LeaseGraceEnd = 6;
 }
 
 message Leases {
