@@ -165,7 +165,7 @@ func TestAllocatorCycles(t *testing.T) {
 func TestAllocatorGaps(t *testing.T) {
 	config := Config{
 		Lease: Lease{
-			Duration:    200 * time.Millisecond,
+			Duration:    time.Second,      // XXX heisenbugs abound in this test, this value is the key to adjusting them away
 			GracePeriod: 10 * time.Minute, // an obnoxious limit intended to blow out the purge routine
 		},
 		DNSServers: []string{
@@ -206,7 +206,7 @@ func TestAllocatorGaps(t *testing.T) {
 		}
 	}
 
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(time.Second)
 
 	for ip, mac := range keep {
 		newip, err := a.Allocate(mac, true)
@@ -253,6 +253,23 @@ func TestAllocatorGaps(t *testing.T) {
 
 	if ip, err := a.Allocate(testutil.RandomMAC(), false); err != ErrRangeExhausted {
 		t.Fatalf("range was not exhausted during testing: %v", ip)
+	}
+
+	time.Sleep(time.Second)
+
+	// now this should succeed by clearing all the leases in grace period
+	if ip, err := a.Allocate(testutil.RandomMAC(), false); err == ErrRangeExhausted {
+		t.Fatalf("range was exhausted during testing: %v", ip)
+	}
+
+	// purge leases to check count, they should have been purged earlier.
+	count, err = db.PurgeLeases(true)
+	if err != nil {
+		t.Fatalf("Could not purge leases: %v", err)
+	}
+
+	if count != 0 {
+		t.Fatalf("Purged n != 0 records: %v", count)
 	}
 }
 
