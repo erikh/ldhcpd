@@ -94,6 +94,22 @@ lease:
   grace_period: 8h
 ```
 
+## Other Notes
+
+ldhcpd will suss out your subnet block from the interface you tell it to listen
+on. **It is very important your interface is configured correctly**. We make
+some checks, but no guarantees!
+
+## Roadmap
+
+- [ ] Per-Lease DNS and Gateway parameters
+- [ ] Hostname support:
+  - [ ] Pushing hostnames
+  - [ ] Recording hostnames from clients
+- [ ] Better, easier to use bridge for the GRPC client
+- [ ] GRPC Listen support for non-localhost connections
+- [ ] PXE booting support
+
 ## Dependencies
 
 - https://github.com/krolaw/dhcp4 for the dhcp4 protocol work, thanks to
