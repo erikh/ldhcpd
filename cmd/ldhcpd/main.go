@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/erikh/go-transport"
 	"github.com/erikh/ldhcpd/dhcpd"
 	"github.com/erikh/ldhcpd/proto"
 	"github.com/erikh/ldhcpd/version"
-	"github.com/erikh/go-transport"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -21,12 +21,20 @@ import (
 func main() {
 	app := cli.NewApp()
 
+	app.Name = "ldhcpd"
+	app.Usage = "Light DHCPd server"
+	app.Author = version.Author
 	app.Version = version.Version
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "disable, d",
 			Usage: "disable the DHCPd DHCP offering (control-plane only)",
+		},
+		cli.StringFlag{
+			Name:  "listen, l",
+			Usage: "Change the host:port to listen for GRPC connections",
+			Value: "localhost:7846",
 		},
 	}
 
@@ -83,7 +91,7 @@ func serve(ctx *cli.Context) error {
 	}
 
 	srv := proto.Boot(db)
-	l, err := transport.Listen(cert, "tcp", "localhost:7846")
+	l, err := transport.Listen(cert, "tcp", ctx.GlobalString("listen"))
 	if err != nil {
 		return errors.Wrap(err, "while configuring grpc listener")
 	}

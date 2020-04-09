@@ -8,18 +8,13 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/erikh/go-transport"
 	"github.com/erikh/ldhcpd/proto"
 	"github.com/erikh/ldhcpd/version"
-	"github.com/erikh/go-transport"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-)
-
-const (
-	// Author is me
-	Author = "Erik Hollensbe <erik+git@hollensbe.org>"
 )
 
 func main() {
@@ -27,7 +22,7 @@ func main() {
 	app.Name = "ldhcpctl"
 	app.Usage = "Control ldhcpd"
 	app.Version = version.Version
-	app.Author = Author
+	app.Author = version.Author
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
