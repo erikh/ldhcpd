@@ -47,12 +47,11 @@ func TestAllocator(t *testing.T) {
 		t.Fatalf("Expected allocated ip was incorrect, was %v, supposed to be %v", ip, config.DynamicRange.From)
 	}
 
-	ip2, err := a.Allocate(testutil.FakeMAC, false)
-	if err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC, false); err != nil {
 		t.Fatalf("error allocating first ip: %v", err)
 	}
 
-	ip2, err = a.Allocate(testutil.FakeMAC2, false)
+	ip2, err := a.Allocate(testutil.FakeMAC2, false)
 	if err != nil {
 		t.Fatalf("Could not allocate second mac: %v", err)
 	}

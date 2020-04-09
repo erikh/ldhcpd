@@ -36,11 +36,6 @@ func (h *Handler) purgeLeases() {
 
 // NewHandler creates a new dhcpd handler.
 func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error) {
-	db, err := config.NewDB()
-	if err != nil {
-		return nil, errors.Wrap(err, "while bootstrapping dhcpd database")
-	}
-
 	intf, err := net.InterfaceByName(interfaceName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error locating interface")

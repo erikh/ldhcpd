@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/erikh/ldhcpd/db"
 	"github.com/erikh/go-transport"
+	"github.com/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"

@@ -1,3 +1,3 @@
 #!bash
 
-printf 'package version\nconst Version = "%s"' "${VERSION}" > generated.go
+printf '//nolint\npackage version\nconst Version = "%s"' "${VERSION}" > generated.go

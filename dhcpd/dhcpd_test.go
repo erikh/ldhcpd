@@ -144,7 +144,9 @@ func TestBasicACK(t *testing.T) {
 	defer os.Remove("test.db")
 
 	handler, err := NewHandler("dhcpd0", config, db)
-
+	if err != nil {
+		t.Fatalf("Error initializing handler: %v", err)
+	}
 	defer handler.Close()
 
 	if err != nil {
@@ -241,9 +243,9 @@ func flushAddrs(dhc netlink.Link) error {
 		return errors.Wrap(err, "listing addresses")
 	}
 
-	for _, item := range list {
-		if err := netlink.AddrDel(dhc, &item); err != nil {
-			return errors.Wrap(err, "deleting address")
+	for i := 0; i < len(list); i++ { // not using range because of pointer pass
+		if err := netlink.AddrDel(dhc, &list[i]); err != nil {
+			return errors.Wrapf(err, "deleting address %v", list[i].IP)
 		}
 	}
 
