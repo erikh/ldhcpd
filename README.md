@@ -77,6 +77,7 @@ gateway: 10.0.20.1
 dynamic_range:
   from: 10.0.20.50
   to: 10.0.20.100
+
 #
 # Lease parameters:
 #
