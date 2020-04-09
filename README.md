@@ -86,7 +86,7 @@ dynamic_range:
 #
 # The grace period is the maximum amount of time the IP is available to the mac
 # address; it is added to the duration. If another mac comes in and there are
-# no available IPs, addresses in # the grace period may be reclaimed to make
+# no available IPs, addresses in the grace period may be reclaimed to make
 # room.
 #
 lease:
@@ -116,7 +116,7 @@ some checks, but no guarantees!
   Richard Warburton (@krolaw), et al. This tool would be much less useful
   without it.
 - https://github.com/jinzhu/gorm and https://github.com/mattn/go-sqlite3 for the database work.
-- https://google.golang.org/grpc for the control plane protocol
+- https://google.golang.org/grpc for the control plane protocol.
 - https://github.com/box-builder/box which is a mruby-based docker image builder.
 
 ## Author
