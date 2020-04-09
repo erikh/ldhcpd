@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"code.hollensbe.org/erikh/ldhcpd/db"
+	"github.com/erikh/ldhcpd/db"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"

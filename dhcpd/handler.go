@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"code.hollensbe.org/erikh/ldhcpd/db"
+	"github.com/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

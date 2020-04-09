@@ -8,8 +8,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"code.hollensbe.org/erikh/ldhcpd/proto"
-	"code.hollensbe.org/erikh/ldhcpd/version"
+	"github.com/erikh/ldhcpd/proto"
+	"github.com/erikh/ldhcpd/version"
 	"github.com/erikh/go-transport"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/timestamp"

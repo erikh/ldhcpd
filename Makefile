@@ -1,5 +1,5 @@
 IMAGE_NAME ?= ldhcpd:testing
-CODE_PATH ?= /go/src/code.hollensbe.org/erikh/ldhcpd
+CODE_PATH ?= /go/src/github.com/erikh/ldhcpd
 GO_TEST := sudo go test -v ./... -race -count 1
 VERSION ?= $(shell git rev-parse HEAD)
 

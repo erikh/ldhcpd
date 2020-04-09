@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"code.hollensbe.org/erikh/ldhcpd/db"
-	"code.hollensbe.org/erikh/ldhcpd/testutil"
+	"github.com/erikh/ldhcpd/db"
+	"github.com/erikh/ldhcpd/testutil"
 	empty "github.com/golang/protobuf/ptypes/empty"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"

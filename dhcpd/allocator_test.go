@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"code.hollensbe.org/erikh/ldhcpd/testutil"
+	"github.com/erikh/ldhcpd/testutil"
 )
 
 func TestAllocator(t *testing.T) {

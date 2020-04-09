@@ -1,4 +1,4 @@
-module code.hollensbe.org/erikh/ldhcpd
+module github.com/erikh/ldhcpd
 
 go 1.14
 

@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"code.hollensbe.org/erikh/ldhcpd/dhcpd"
-	"code.hollensbe.org/erikh/ldhcpd/proto"
-	"code.hollensbe.org/erikh/ldhcpd/version"
+	"github.com/erikh/ldhcpd/dhcpd"
+	"github.com/erikh/ldhcpd/proto"
+	"github.com/erikh/ldhcpd/version"
 	"github.com/erikh/go-transport"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
