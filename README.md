@@ -102,6 +102,8 @@ some checks, but no guarantees!
 
 ## Roadmap
 
+These are the items planned for the near future of this project:
+
 - [ ] Per-Lease DNS and Gateway parameters
 - [ ] Hostname support:
   - [ ] Pushing hostnames
@@ -109,6 +111,7 @@ some checks, but no guarantees!
 - [ ] Better, easier to use bridge for the GRPC client
 - [ ] GRPC Listen support for non-localhost connections
 - [ ] PXE booting support
+  - [ ] maybe with TFTP baked-in?
 
 ## Dependencies
 
