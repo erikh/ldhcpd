@@ -1,6 +1,7 @@
 .bash_history
 .bashrc
 .go-cache
+.cache
 .sqlite_history
 .local
 build

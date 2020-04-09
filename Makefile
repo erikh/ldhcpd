@@ -14,7 +14,7 @@ DOCKER_CMD := docker run -it \
 	-v ${PWD}:$(CODE_PATH) \
 	$(IMAGE_NAME)
 
-release: distclean
+release: distclean lint
 	GOBIN=${PWD}/build/ldhcpd-$$(cat VERSION) VERSION=$$(cat VERSION) make install
 	# FIXME include LICENSE.md
 	cp README.md example.conf build/ldhcpd-$$(cat VERSION)
@@ -71,5 +71,8 @@ get-box:
 
 test:
 	if [ -z "$${IN_DOCKER}" ]; then make build && $(DOCKER_CMD) $(GO_TEST); else $(GO_TEST); fi
+
+lint:
+	golangci-lint run -v
 
 .PHONY: test

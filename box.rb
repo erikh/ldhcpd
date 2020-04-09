@@ -6,6 +6,9 @@ PROTOC_URL     = "https://github.com/protocolbuffers/protobuf/releases/download/
 MKCERT_VERSION = "1.4.1"
 MKCERT_URL = "https://github.com/FiloSottile/mkcert/releases/download/v#{MKCERT_VERSION}/mkcert-v#{MKCERT_VERSION}-linux-amd64"
 
+GOLANGCI_LINT_VERSION = "1.24.0"
+GOLANGCI_LINT_URL = "https://github.com/golangci/golangci-lint/releases/download/v#{GOLANGCI_LINT_VERSION}/golangci-lint-#{GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz"
+
 def download(name, url)
   run "curl -sSL -o /#{name} '#{url}'"
   yield "/#{name}"
@@ -27,6 +30,14 @@ end
 download("mkcert", MKCERT_URL) do |path|
   run "chmod 0755 '#{path}'"
   run "mv '#{path}' /usr/local/bin"
+end
+
+download("golangci-lint.tar.gz", GOLANGCI_LINT_URL) do |path|
+  run "mkdir /tmp/golangci-lint"
+  run "tar xz -C /tmp/golangci-lint --strip-components=1 -f #{path}"
+  run "mv /tmp/golangci-lint/golangci-lint /usr/local/bin/golangci-lint"
+  run "chmod 0755 '/usr/local/bin/golangci-lint'"
+  run "rm -rf /tmp/golangci-lint"
 end
 
 run "mkdir /etc/ldhcpd && chown 1000:1000 /etc/ldhcpd"
