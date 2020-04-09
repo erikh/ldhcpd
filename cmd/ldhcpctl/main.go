@@ -174,7 +174,7 @@ func set(ctx *cli.Context) error {
 		IPAddress:     ctx.Args()[1],
 		Persistent:    persistent,
 		LeaseEnd:      &timestamp.Timestamp{Seconds: time.Now().Add(leaseEnd).Unix()},
-		LeaseGraceEnd: &timestamp.Timestamp{Seconds: time.Now().Add(ctx.Duration("grace-period")).Unix()},
+		LeaseGraceEnd: &timestamp.Timestamp{Seconds: time.Now().Add(leaseEnd).Add(ctx.Duration("grace-period")).Unix()},
 	})
 	if err != nil {
 		return errors.Wrap(err, "error during lease set")
