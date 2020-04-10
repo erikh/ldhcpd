@@ -5,11 +5,11 @@ IPv4 pool allocation as well as persistent, static leases. iPXE support does
 not exist yet, but is planned.
 
 One thing Light DHCPd offers that is novel, is a remote control plane powered
-over GRPC, authenticated and encrypted by TLS (ecdsa certs are only supported
-currently) client certificates. This control plane can be embedded into your
-orchestration code or you can use the provided command-line tool to manipulate
-it from your shell. There is a golang client, and the protobufs are included
-in the source tree if you wish to generate clients for other languages.
+over GRPC, authenticated and encrypted by TLS client certificates. This control
+plane can be embedded into your orchestration code or you can use the provided
+command-line tool to manipulate it from your shell. There is a golang client,
+and the protobufs are included in the source tree if you wish to generate
+clients for other languages.
 
 There is a small configuration file for managing dynamic leases and the overall
 network parameters (resolver, gateway).
@@ -97,8 +97,6 @@ lease:
 ## Making your certificate authority
 
 We use [mkcert](https://github.com/FiloSottile/mkcert) to generate our certs.
-They must be ECDSA-ciphered certs at the moment (RSA support is coming, a
-limitation of our underlying libraries).
 
 You can use this script to generate a very basic CA that operates over
 `localhost`. Depending on your circumstances, you may need to run it as `root`.
@@ -108,8 +106,8 @@ client; be mindful of permissions and directory names!
 
 ```bash
 CAROOT=/etc/ldhcpd mkcert -install # CA file will be /etc/ldhcpd/rootCA.pem
-CAROOT=/etc/ldhcpd mkcert -ecdsa -cert-file /etc/ldhcpd/server.pem -key-file /etc/ldhcpd/server.key localhost 127.0.0.1
-CAROOT=/etc/ldhcpd mkcert -ecdsa -client -cert-file /etc/ldhcpd/client.pem -key-file /etc/ldhcpd/client.key localhost 127.0.0.1
+CAROOT=/etc/ldhcpd mkcert -cert-file /etc/ldhcpd/server.pem -key-file /etc/ldhcpd/server.key localhost 127.0.0.1
+CAROOT=/etc/ldhcpd mkcert -client -cert-file /etc/ldhcpd/client.pem -key-file /etc/ldhcpd/client.key localhost 127.0.0.1
 ```
 
 ## Other Notes
@@ -147,7 +145,6 @@ These are the items planned for the near future of this project:
   - [ ] Pushing hostnames
   - [ ] Recording hostnames from clients
 - [ ] Better, easier to use bridge for the GRPC client
-- [x] GRPC Listen support for non-localhost connections
 - [ ] PXE booting support
   - [ ] maybe with TFTP baked-in?
 
