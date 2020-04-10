@@ -22,6 +22,10 @@ github.com/erikh/go-transport v0.0.4-0.20200410180353-672d35dc3ec4 h1:NvqFWlEY2S
 github.com/erikh/go-transport v0.0.4-0.20200410180353-672d35dc3ec4/go.mod h1:m+4kPRT/J3XZlWf8wI7F94qsigCe5Snc3KxAblRkEMw=
 github.com/erikh/go-transport v0.0.4 h1:gGammlsN/MRSaoSS4wFyIuGK4UweXTzHuVmoHihtmI0=
 github.com/erikh/go-transport v0.0.4/go.mod h1:m+4kPRT/J3XZlWf8wI7F94qsigCe5Snc3KxAblRkEMw=
+github.com/erikh/go-transport v0.0.5-0.20200410184346-549e370f2408 h1:4OjLSm65eirAcqttWCHXkg5ldYGSGbt+hOyisLFVdS0=
+github.com/erikh/go-transport v0.0.5-0.20200410184346-549e370f2408/go.mod h1:m+4kPRT/J3XZlWf8wI7F94qsigCe5Snc3KxAblRkEMw=
+github.com/erikh/go-transport v0.1.0 h1:+5hgJ54QdjhwBBbMLalLd8KdbR7lsyx+k9HBEfml3rY=
+github.com/erikh/go-transport v0.1.0/go.mod h1:m+4kPRT/J3XZlWf8wI7F94qsigCe5Snc3KxAblRkEMw=
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5/go.mod h1:a2zkGnVExMxdzMo3M0Hi/3sEU+cWnZpSni0O6/Yb/P0=
 github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe/go.mod h1:8vg3r2VgvsThLBIFL93Qb5yWzgyZWhEmBwUJWevAkK0=
