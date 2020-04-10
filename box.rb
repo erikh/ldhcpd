@@ -4,10 +4,10 @@ PROTOC_VERSION = "3.11.4"
 PROTOC_URL     = "https://github.com/protocolbuffers/protobuf/releases/download/v#{PROTOC_VERSION}/protoc-#{PROTOC_VERSION}-linux-x86_64.zip"
 
 MKCERT_VERSION = "1.4.1"
-MKCERT_URL = "https://github.com/FiloSottile/mkcert/releases/download/v#{MKCERT_VERSION}/mkcert-v#{MKCERT_VERSION}-linux-amd64"
+MKCERT_URL     = "https://github.com/FiloSottile/mkcert/releases/download/v#{MKCERT_VERSION}/mkcert-v#{MKCERT_VERSION}-linux-amd64"
 
 GOLANGCI_LINT_VERSION = "1.24.0"
-GOLANGCI_LINT_URL = "https://github.com/golangci/golangci-lint/releases/download/v#{GOLANGCI_LINT_VERSION}/golangci-lint-#{GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz"
+GOLANGCI_LINT_URL     = "https://github.com/golangci/golangci-lint/releases/download/v#{GOLANGCI_LINT_VERSION}/golangci-lint-#{GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz"
 
 def download(name, url)
   run "curl -sSL -o /#{name} '#{url}'"
