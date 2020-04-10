@@ -16,8 +16,7 @@ DOCKER_CMD := docker run -it \
 
 release: distclean lint
 	GOBIN=${PWD}/build/ldhcpd-$$(cat VERSION) VERSION=$$(cat VERSION) make install
-	# FIXME include LICENSE.md
-	cp README.md example.conf build/ldhcpd-$$(cat VERSION)
+	cp LICENSE README.md example.conf build/ldhcpd-$$(cat VERSION)
 	cd build && tar cvzf ../ldhcpd-$$(cat ../VERSION).tar.gz ldhcpd-$$(cat ../VERSION)
 
 distclean:
