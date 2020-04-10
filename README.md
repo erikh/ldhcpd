@@ -94,6 +94,24 @@ lease:
   grace_period: 8h
 ```
 
+## Making your certificate authority
+
+We use [mkcert](https://github.com/FiloSottile/mkcert) to generate our certs.
+They must be ECDSA-ciphered certs at the moment (RSA support is coming, a
+limitation of our underlying libraries).
+
+You can use this script to generate a very basic CA that operates over
+`localhost`. Depending on your circumstances, you may need to run it as `root`.
+
+This code also installs it into the paths expected by default in the daemon and
+client; be mindful of permissions and directory names!
+
+```bash
+CAROOT=/etc/ldhcpd mkcert -install # CA file will be /etc/ldhcpd/rootCA.pem
+CAROOT=/etc/ldhcpd mkcert -ecdsa -cert-file /etc/ldhcpd/server.pem -key-file /etc/ldhcpd/server.key localhost 127.0.0.1
+CAROOT=/etc/ldhcpd mkcert -ecdsa -client -cert-file /etc/ldhcpd/client.pem -key-file /etc/ldhcpd/client.key localhost 127.0.0.1
+```
+
 ## Other Notes
 
 ldhcpd will suss out your subnet block from the interface you tell it to listen
