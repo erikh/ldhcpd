@@ -109,7 +109,7 @@ These are the items planned for the near future of this project:
   - [ ] Pushing hostnames
   - [ ] Recording hostnames from clients
 - [ ] Better, easier to use bridge for the GRPC client
-- [ ] GRPC Listen support for non-localhost connections
+- [x] GRPC Listen support for non-localhost connections
 - [ ] PXE booting support
   - [ ] maybe with TFTP baked-in?
 
