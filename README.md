@@ -116,7 +116,27 @@ CAROOT=/etc/ldhcpd mkcert -ecdsa -client -cert-file /etc/ldhcpd/client.pem -key-
 
 ldhcpd will suss out your subnet block from the interface you tell it to listen
 on. **It is very important your interface is configured correctly**. We make
-some checks, but no guarantees!
+some checks, but no guarantees! Most importantly, ensure the **subnet for ip is
+configured properly**. Subnetting is a bit beyond this document's scope, but
+this is typically done by associating the IP with a CIDR address space that is
+_less_ than `32`.
+
+Example:
+
+```
+2: ens18: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether a6:80:e0:5e:c5:46 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.0.2/24 brd 10.0.0.255 scope global ens18
+       valid_lft forever preferred_lft forever
+    inet6 2001:1::1/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a480:e0ff:fe5e:c546/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+`10.0.0.2/24` will get selected here to serve. Only **one** address like this
+may be configured for now. We may eventually address this, but for now if you
+need to serve two subnets, start two of `ldhcpd` on different interfaces.
 
 ## Roadmap
 
