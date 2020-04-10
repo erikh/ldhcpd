@@ -160,6 +160,10 @@ These are the items planned for the near future of this project:
 - https://google.golang.org/grpc for the control plane protocol.
 - https://github.com/box-builder/box which is a mruby-based docker image builder.
 
+## License
+
+MIT License
+
 ## Author
 
 Erik Hollensbe <erik+git@hollensbe.org>
