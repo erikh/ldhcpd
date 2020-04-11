@@ -99,6 +99,82 @@ func TestAllocator(t *testing.T) {
 	}
 }
 
+func TestAllocatorPreferred(t *testing.T) {
+	config := Config{
+		Lease: Lease{
+			Duration: 100 * time.Millisecond,
+		},
+		DNSServers: []string{
+			"10.0.0.1",
+			"1.1.1.1",
+		},
+		Gateway: "10.0.20.1",
+		DynamicRange: Range{
+			From: "10.0.20.50",
+			To:   "10.0.20.50",
+		},
+		DBFile: "test.db",
+	}
+	defer os.Remove("test.db")
+
+	db, err := config.NewDB()
+	if err != nil {
+		t.Fatalf("Error creating database: %v", err)
+	}
+	defer db.Close()
+
+	a, err := NewAllocator(db, config, nil)
+	if err != nil {
+		t.Fatalf("error creating allocator: %v", err)
+	}
+
+	ip, err := a.Allocate(testutil.FakeMAC, false, nil)
+	if err != nil {
+		t.Fatalf("allocation failed: %v", err)
+	}
+
+	time.Sleep(200 * time.Millisecond)
+
+	count, err := db.PurgeLeases(true)
+	if err != nil {
+		t.Fatalf("While purging leases: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("Purged lease count wasn't 1, was %d", count)
+	}
+
+	ip2, err := a.Allocate(testutil.FakeMAC, false, ip)
+	if err != nil {
+		t.Fatalf("allocation failed: %v", err)
+	}
+
+	if !ip.Equal(ip2) {
+		t.Fatalf("Preferred IP (%v) wasn't allocated, got %v back", ip, ip2)
+	}
+
+	time.Sleep(200 * time.Millisecond)
+
+	count, err = db.PurgeLeases(true)
+	if err != nil {
+		t.Fatalf("While purging leases: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("Purged lease count wasn't 1, was %d", count)
+	}
+
+	// give out to another mac
+	ip2, err = a.Allocate(testutil.FakeMAC2, false, ip)
+	if err != nil {
+		t.Fatalf("allocation failed: %v", err)
+	}
+
+	if !ip.Equal(ip2) {
+		t.Fatalf("Preferred IP (%v) wasn't allocated, got %v back", ip, ip2)
+	}
+}
+
 func TestAllocatorCycles(t *testing.T) {
 	config := Config{
 		Lease: Lease{
