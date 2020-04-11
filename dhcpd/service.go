@@ -1,6 +1,8 @@
 package dhcpd
 
 import (
+	"net"
+
 	"github.com/krolaw/dhcp4"
 	"github.com/sirupsen/logrus"
 )
@@ -11,7 +13,7 @@ func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options
 	case dhcp4.Discover:
 		logrus.Infof("received discover from %v", req.CHAddr())
 
-		ip, err := h.allocator.Allocate(req.CHAddr(), true)
+		ip, err := h.allocator.Allocate(req.CHAddr(), true, nil)
 		if err != nil {
 			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
 			return dhcp4.ReplyPacket(req, dhcp4.NAK, h.ip, req.CIAddr(), 0, nil)
@@ -23,7 +25,12 @@ func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options
 	case dhcp4.Request:
 		logrus.Infof("received request for %v from %v", req.CIAddr(), req.CHAddr())
 
-		ip, err := h.allocator.Allocate(req.CHAddr(), true)
+		preferredIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
+		if preferredIP == nil {
+			preferredIP = req.CIAddr()
+		}
+
+		ip, err := h.allocator.Allocate(req.CHAddr(), true, preferredIP)
 		if err != nil {
 			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
 			return dhcp4.ReplyPacket(req, dhcp4.NAK, h.ip, req.CIAddr(), 0, nil)
