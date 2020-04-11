@@ -8,6 +8,7 @@ import (
 	"github.com/erikh/ldhcpd/db"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // ErrRangeExhausted is returned when the IP range is exhausted
@@ -38,7 +39,7 @@ func NewAllocator(db *db.DB, c Config, initial net.IP) (*Allocator, error) {
 // Allocate or Retrieve an IP address for a mac. renew states that if there is
 // already an IP present in the leases table for this mac, to renew the lease
 // if necessary.
-func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
+func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool, preferred net.IP) (net.IP, error) {
 	now := time.Now()
 	// FIXME returning lease end here may help with some distributed race conditions we're seeing
 	l, err := a.db.GetLease(mac)
@@ -53,14 +54,24 @@ func (a *Allocator) Allocate(mac net.HardwareAddr, renew bool) (net.IP, error) {
 
 		return l.IP(), nil
 	}
-	first, last := a.config.DynamicRange.Dimensions()
 
-	a.lastIPMutex.Lock()
-	defer a.lastIPMutex.Unlock()
+	first, last := a.config.DynamicRange.Dimensions()
 
 	// calculate these ahead of time to save a few cycles
 	leaseEnd := now.Add(a.config.Lease.Duration)
 	gracePeriodEnd := leaseEnd.Add(a.config.Lease.GracePeriod)
+
+	if preferred != nil && dhcp4.IPInRange(first, last, preferred) {
+		logrus.Infof("Preferred IP (%v) supplied; will attempt leasing that for [%v]", preferred, mac)
+		if err := a.db.SetLease(mac, preferred, true, false, leaseEnd, gracePeriodEnd); err != nil {
+			logrus.Warnf("[%v] Getting a lease for preferred IP (%v) was rejected due to an error: %v", mac, preferred, err)
+		} else {
+			return preferred, nil
+		}
+	}
+
+	a.lastIPMutex.Lock()
+	defer a.lastIPMutex.Unlock()
 
 	var foundFirst, foundFirstClearedGrace bool
 	for {

@@ -38,7 +38,7 @@ func TestAllocator(t *testing.T) {
 		t.Fatalf("error creating allocator: %v", err)
 	}
 
-	ip, err := a.Allocate(testutil.FakeMAC, false)
+	ip, err := a.Allocate(testutil.FakeMAC, false, nil)
 	if err != nil {
 		t.Fatalf("error allocating first ip: %v", err)
 	}
@@ -47,11 +47,11 @@ func TestAllocator(t *testing.T) {
 		t.Fatalf("Expected allocated ip was incorrect, was %v, supposed to be %v", ip, config.DynamicRange.From)
 	}
 
-	if _, err := a.Allocate(testutil.FakeMAC, false); err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC, false, nil); err != nil {
 		t.Fatalf("error allocating first ip: %v", err)
 	}
 
-	ip2, err := a.Allocate(testutil.FakeMAC2, false)
+	ip2, err := a.Allocate(testutil.FakeMAC2, false, nil)
 	if err != nil {
 		t.Fatalf("Could not allocate second mac: %v", err)
 	}
@@ -71,21 +71,21 @@ func TestAllocator(t *testing.T) {
 		t.Fatal("Did not purge all leases!")
 	}
 
-	if _, err := a.Allocate(testutil.FakeMAC, false); err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC, false, nil); err != nil {
 		t.Fatalf("error allocating first ip: %v", err)
 	}
 
-	if _, err := a.Allocate(testutil.FakeMAC2, false); err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC2, false, nil); err != nil {
 		t.Fatalf("Could not allocate second mac: %v", err)
 	}
 
 	time.Sleep(100 * time.Millisecond)
 
-	if _, err := a.Allocate(testutil.FakeMAC, true); err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC, true, nil); err != nil {
 		t.Fatalf("error allocating first ip: %v", err)
 	}
 
-	if _, err := a.Allocate(testutil.FakeMAC2, true); err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC2, true, nil); err != nil {
 		t.Fatalf("Could not allocate second mac: %v", err)
 	}
 
@@ -128,7 +128,7 @@ func TestAllocatorCycles(t *testing.T) {
 		t.Fatalf("error creating allocator: %v", err)
 	}
 
-	ip, err := a.Allocate(testutil.FakeMAC, false)
+	ip, err := a.Allocate(testutil.FakeMAC, false, nil)
 	if err != nil {
 		t.Fatalf("allocation failed: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestAllocatorCycles(t *testing.T) {
 		t.Fatal("IP was not allocated properly")
 	}
 
-	if _, err := a.Allocate(testutil.FakeMAC2, false); err != ErrRangeExhausted {
+	if _, err := a.Allocate(testutil.FakeMAC2, false, nil); err != ErrRangeExhausted {
 		if err != nil {
 			t.Logf("Error was: %v", err)
 		}
@@ -156,7 +156,7 @@ func TestAllocatorCycles(t *testing.T) {
 		t.Fatal("Did not purge all leases!")
 	}
 
-	if _, err := a.Allocate(testutil.FakeMAC2, false); err != nil {
+	if _, err := a.Allocate(testutil.FakeMAC2, false, nil); err != nil {
 		t.Fatalf("Could not allocate against other mac after purge: %v", err)
 	}
 }
@@ -195,7 +195,7 @@ func TestAllocatorGaps(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		mac := testutil.RandomMAC()
-		ip, err := a.Allocate(mac, false)
+		ip, err := a.Allocate(mac, false, nil)
 		if err != nil {
 			t.Fatalf("Allocation failed: %v", err)
 		}
@@ -208,7 +208,7 @@ func TestAllocatorGaps(t *testing.T) {
 	time.Sleep(time.Second)
 
 	for ip, mac := range keep {
-		newip, err := a.Allocate(mac, true)
+		newip, err := a.Allocate(mac, true, nil)
 		if err != nil {
 			t.Fatalf("Error allocating for renewal: %v", err)
 		}
@@ -229,7 +229,7 @@ func TestAllocatorGaps(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		mac := testutil.RandomMAC()
-		ip, err := a.Allocate(mac, false)
+		ip, err := a.Allocate(mac, false, nil)
 		if err != nil {
 			t.Fatalf("Allocation failed: %v", err)
 		}
@@ -244,20 +244,20 @@ func TestAllocatorGaps(t *testing.T) {
 	// this is needed to keep the pool from timing out while between this and
 	// that, no purge will happen so the leases are safe.
 	for _, mac := range keep {
-		_, err := a.Allocate(mac, true)
+		_, err := a.Allocate(mac, true, nil)
 		if err != nil {
 			t.Fatalf("While refreshing ip addresses: %v", err)
 		}
 	}
 
-	if ip, err := a.Allocate(testutil.RandomMAC(), false); err != ErrRangeExhausted {
+	if ip, err := a.Allocate(testutil.RandomMAC(), false, nil); err != ErrRangeExhausted {
 		t.Fatalf("range was not exhausted during testing: %v", ip)
 	}
 
 	time.Sleep(time.Second)
 
 	// now this should succeed by clearing all the leases in grace period
-	if ip, err := a.Allocate(testutil.RandomMAC(), false); err == ErrRangeExhausted {
+	if ip, err := a.Allocate(testutil.RandomMAC(), false, nil); err == ErrRangeExhausted {
 		t.Fatalf("range was exhausted during testing: %v", ip)
 	}
 
@@ -317,7 +317,7 @@ func TestAllocatorPersistent(t *testing.T) {
 		t.Fatal("Purged persistent lease for some reason")
 	}
 
-	ip, err := a.Allocate(mac, false)
+	ip, err := a.Allocate(mac, false, nil)
 	if err != nil {
 		t.Fatalf("Error allocating mac: %v", err)
 	}
