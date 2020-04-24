@@ -9,8 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krolaw/dhcp4"
-	"github.com/krolaw/dhcp4/conn"
+	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 )
@@ -121,7 +120,12 @@ func setupDHCPHandler(t *testing.T, config Config) (*Handler, chan struct{}) {
 		t.Fatalf("Error initializing database: %v", err)
 	}
 
-	handler, err := NewHandler("dhcpd0", config, db)
+	ip, err := InterfaceIP("dhcpd0")
+	if err != nil {
+		t.Fatalf("While determining interface IP: %v", err)
+	}
+
+	handler, err := NewHandler(ip, config, db)
 	if err != nil {
 		t.Fatalf("Error initializing handler: %v", err)
 	}
@@ -132,16 +136,16 @@ func setupDHCPHandler(t *testing.T, config Config) (*Handler, chan struct{}) {
 
 	doneChan := make(chan struct{})
 
-	l, err := conn.NewUDP4FilterListener("dhcpd0", ":67")
+	addr := &net.UDPAddr{Port: 67}
+	s, err := server4.NewServer("dhcpd0", addr, handler.ServeDHCP)
 	if err != nil {
 		t.Fatal(err)
 	}
+	go s.Serve()
 	go func() {
 		<-doneChan
-		l.Close()
+		s.Close()
 	}()
-
-	go dhcp4.Serve(l, handler)
 
 	return handler, doneChan
 }

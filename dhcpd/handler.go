@@ -5,18 +5,21 @@ import (
 	"time"
 
 	"github.com/erikh/ldhcpd/db"
-	"github.com/krolaw/dhcp4"
+	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
+type dhcpOptions map[dhcpv4.OptionCode]dhcpv4.OptionValue
+
 // Handler is the dhpcd handler for serving requests.
 type Handler struct {
 	ip        net.IP
-	options   dhcp4.Options
+	options   dhcpOptions
 	config    Config
 	db        *db.DB
 	allocator *Allocator
+	closed    bool
 }
 
 func (h *Handler) purgeLeases() {
@@ -34,8 +37,8 @@ func (h *Handler) purgeLeases() {
 	}
 }
 
-// NewHandler creates a new dhcpd handler.
-func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error) {
+// InterfaceIP gets the most likely interface IP safe for listening on DHCP.
+func InterfaceIP(interfaceName string) (*net.IPNet, error) {
 	intf, err := net.InterfaceByName(interfaceName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error locating interface")
@@ -65,6 +68,12 @@ func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error
 		return nil, errors.Errorf("Could not find a suitable IP for serving on interface %v", interfaceName)
 	}
 
+	return ip, nil
+}
+
+// NewHandler creates a new dhcpd handler.
+func NewHandler(ip *net.IPNet, config Config, db *db.DB) (*Handler, error) {
+
 	alloc, err := NewAllocator(db, config, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "while initializing allocator")
@@ -75,10 +84,10 @@ func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error
 		config:    config,
 		db:        db,
 		allocator: alloc,
-		options: dhcp4.Options{
-			dhcp4.OptionSubnetMask:       ip.Mask,
-			dhcp4.OptionRouter:           config.GatewayIP(),
-			dhcp4.OptionDomainNameServer: config.DNS(),
+		options: dhcpOptions{
+			dhcpv4.OptionSubnetMask:       dhcpv4.IP(ip.Mask),
+			dhcpv4.OptionRouter:           dhcpv4.IP(config.GatewayIP()),
+			dhcpv4.OptionDomainNameServer: dhcpv4.IPs(config.DNS()),
 		},
 	}
 
@@ -90,5 +99,6 @@ func NewHandler(interfaceName string, config Config, db *db.DB) (*Handler, error
 
 // Close the handler
 func (h *Handler) Close() error {
+	h.closed = true
 	return h.db.Close()
 }

@@ -58,3 +58,42 @@ func TestBasicACK(t *testing.T) {
 		t.Fatalf("Was not the expected IP: was %v", ip)
 	}
 }
+
+/*
+func TestParallelAcquisition(t *testing.T) {
+	setupTest(t)
+	defer cleanupTest(t)
+
+	time.Sleep(time.Second)
+
+	config := Config{
+		Lease: Lease{
+			Duration: 5 * time.Second,
+		},
+		DNSServers: []string{
+			"10.0.0.1",
+			"1.1.1.1",
+		},
+		Gateway: "10.0.20.1",
+		DynamicRange: Range{
+			From: "10.0.20.50",
+			To:   "10.0.20.100",
+		},
+		DBFile: "test.db",
+	}
+
+	handler, term := setupDHCPHandler(t, config)
+	defer os.Remove(config.DBFile)
+	defer handler.Close()
+	defer close(term)
+
+	c, err := nclient4.New("dhclient0")
+	resp, err := c.DiscoverOffer()
+	if err != nil {
+		dumpInterfaces()
+		t.Fatal(err)
+	}
+
+	fmt.Println(resp)
+}
+*/

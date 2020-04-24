@@ -3,47 +3,89 @@ package dhcpd
 import (
 	"net"
 
-	"github.com/krolaw/dhcp4"
+	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/sirupsen/logrus"
 )
 
-// ServeDHCP returns a dhcp response for a dhcp request.
-func (h *Handler) ServeDHCP(req dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
-	switch msgType {
-	case dhcp4.Discover:
-		logrus.Infof("received discover from %v", req.CHAddr())
-
-		ip, err := h.allocator.Allocate(req.CHAddr(), true, nil)
-		if err != nil {
-			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
-			return dhcp4.ReplyPacket(req, dhcp4.NAK, h.ip, req.CIAddr(), 0, nil)
-		}
-
-		logrus.Infof("Generated lease for mac [%v] ip [%v]", req.CHAddr(), ip)
-
-		return dhcp4.ReplyPacket(req, dhcp4.Offer, h.ip, ip, h.config.Lease.Duration, h.options.SelectOrderOrAll(nil))
-	case dhcp4.Request:
-		logrus.Infof("received request for %v from %v", req.CIAddr(), req.CHAddr())
-
-		preferredIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
-		if preferredIP == nil {
-			preferredIP = req.CIAddr()
-		}
-
-		ip, err := h.allocator.Allocate(req.CHAddr(), true, preferredIP)
-		if err != nil {
-			logrus.Errorf("Error allocating IP for %v: %v", req.CHAddr(), err)
-			return dhcp4.ReplyPacket(req, dhcp4.NAK, h.ip, req.CIAddr(), 0, nil)
-		}
-
-		logrus.Infof("Lease obtained for mac [%v] ip [%v]", req.CHAddr(), ip)
-
-		return dhcp4.ReplyPacket(req, dhcp4.ACK, h.ip, ip, h.config.Lease.Duration, h.options.SelectOrderOrAll(nil))
-	case dhcp4.Release:
-		logrus.Info("received release")
-	case dhcp4.Decline:
-		logrus.Info("received decline")
+func (h *Handler) configureReply(m *dhcpv4.DHCPv4, mt dhcpv4.MessageType) (*dhcpv4.DHCPv4, error) {
+	rep, err := dhcpv4.NewReplyFromRequest(m)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	rep.UpdateOption(dhcpv4.OptMessageType(mt))
+	rep.UpdateOption(dhcpv4.OptServerIdentifier(h.ip))
+	rep.UpdateOption(dhcpv4.OptIPAddressLeaseTime(h.config.Lease.Duration))
+
+	for opt, val := range h.options {
+		rep.UpdateOption(dhcpv4.Option{Code: opt, Value: val})
+	}
+
+	return rep, nil
+}
+
+// ServeDHCP returns a dhcp response for a dhcp request.
+func (h *Handler) ServeDHCP(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
+	if h.closed {
+		return
+	}
+
+	switch m.MessageType() {
+	case dhcpv4.MessageTypeDiscover:
+		logrus.Infof("received discover from %v", m.ClientHWAddr)
+
+		ip, err := h.allocator.Allocate(m.ClientHWAddr, true, nil)
+		if err != nil {
+			logrus.Errorf("Error allocating IP for %v: %v", m.ClientHWAddr, err)
+			return
+		}
+
+		logrus.Infof("Generated lease for mac [%v] ip [%v]", m.ClientHWAddr, ip)
+
+		rep, err := h.configureReply(m, dhcpv4.MessageTypeOffer)
+		if err != nil {
+			logrus.Errorf("While configuring discover reply: %v", err)
+			return
+		}
+
+		rep.YourIPAddr = ip
+
+		if _, err := conn.WriteTo(rep.ToBytes(), peer); err != nil {
+			logrus.Errorf("Error replying to DHCP discover: %v", err)
+			return
+		}
+	case dhcpv4.MessageTypeRequest:
+		logrus.Infof("received request for %v from %v", m.ClientHWAddr, m.ClientHWAddr)
+
+		preferredIP := net.IP(m.Options[uint8(dhcpv4.OptionRequestedIPAddress)])
+		if preferredIP == nil {
+			preferredIP = m.ClientIPAddr
+		}
+
+		ip, err := h.allocator.Allocate(m.ClientHWAddr, true, preferredIP)
+		if err != nil {
+			logrus.Errorf("Error allocating IP for %v: %v", m.ClientHWAddr, err)
+			// FIXME NAK here
+			return
+		}
+
+		logrus.Infof("Lease obtained for mac [%v] ip [%v]", m.ClientHWAddr, ip)
+
+		rep, err := h.configureReply(m, dhcpv4.MessageTypeAck)
+		if err != nil {
+			logrus.Errorf("While configuring discover reply: %v", err)
+			return
+		}
+
+		rep.YourIPAddr = ip
+
+		if _, err := conn.WriteTo(rep.ToBytes(), peer); err != nil {
+			logrus.Errorf("Error replying to DHCP request: %v", err)
+			return
+		}
+	case dhcpv4.MessageTypeRelease:
+		logrus.Info("received release")
+	case dhcpv4.MessageTypeDecline:
+		logrus.Info("received decline")
+	}
 }

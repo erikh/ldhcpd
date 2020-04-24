@@ -99,10 +99,6 @@ func (c *Config) validateAndFix() error {
 		return errors.New("DNS servers contains invalid IPs")
 	}
 
-	if len(c.DNS())%4 != 0 {
-		return errors.New("DNS servers contain invalid IPs")
-	}
-
 	if c.DBFile == "" {
 		c.DBFile = defaultDBFile
 	}
@@ -132,10 +128,10 @@ func (c Config) GatewayIP() net.IP {
 }
 
 // DNS returns the IP addresses associated with the DNS servers.
-func (c Config) DNS() []byte {
-	ips := []byte{}
+func (c Config) DNS() []net.IP {
+	ips := []net.IP{}
 	for _, srv := range c.DNSServers {
-		ips = append(ips, net.ParseIP(srv).To4()...)
+		ips = append(ips, net.ParseIP(srv).To4())
 	}
 
 	return ips

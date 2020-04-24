@@ -172,16 +172,6 @@ func TestConfig(t *testing.T) {
 
 	invalidConfigs := map[string]Config{
 		"empty fields": {},
-		"bad dns": {
-			DNSServers: []string{
-				"acdef",
-			},
-			Gateway: "10.0.20.1",
-			DynamicRange: Range{
-				From: "10.0.20.50",
-				To:   "10.0.20.100",
-			},
-		},
 		"bad gateway": {
 			DNSServers: []string{
 				"10.0.0.1",
