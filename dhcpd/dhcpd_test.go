@@ -1,13 +1,19 @@
 package dhcpd
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
+	"github.com/krolaw/dhcp4"
+	"github.com/pkg/errors"
 )
 
-func TestBasicACK(t *testing.T) {
+func TestRealClientACK(t *testing.T) {
 	setupTest(t)
 	defer cleanupTest(t)
 
@@ -29,9 +35,8 @@ func TestBasicACK(t *testing.T) {
 		DBFile: "test.db",
 	}
 
-	handler, term := setupDHCPHandler(t, config)
+	term := setupDHCPHandler(t, config)
 	defer os.Remove(config.DBFile)
-	defer handler.Close()
 	defer close(term)
 
 	ip := testDHCP(t)
@@ -59,9 +64,8 @@ func TestBasicACK(t *testing.T) {
 	}
 }
 
-/*
 func TestParallelAcquisition(t *testing.T) {
-	setupTest(t)
+	bridge := setupTest(t)
 	defer cleanupTest(t)
 
 	time.Sleep(time.Second)
@@ -82,18 +86,57 @@ func TestParallelAcquisition(t *testing.T) {
 		DBFile: "test.db",
 	}
 
-	handler, term := setupDHCPHandler(t, config)
+	term := setupDHCPHandler(t, config)
 	defer os.Remove(config.DBFile)
-	defer handler.Close()
 	defer close(term)
 
-	c, err := nclient4.New("dhclient0")
-	resp, err := c.DiscoverOffer()
-	if err != nil {
-		dumpInterfaces()
-		t.Fatal(err)
+	from, to := config.DynamicRange.Dimensions()
+	errChan := make(chan error, 50)
+	doneChan := make(chan struct{}, 50)
+
+	for i := 0; i < 50; i++ {
+		go func(i int) {
+			defer func() { doneChan <- struct{}{} }()
+
+			linkName := fmt.Sprintf("pclient%d", i)
+			addVethPair(linkName, bridge)
+			defer teardownLink(linkName)
+
+			c, err := nclient4.New(linkName)
+			if err != nil {
+				errChan <- err
+			}
+
+			offer, ack, err := c.Request(context.Background())
+			if err != nil {
+				errChan <- errors.Wrap(err, "could not complete request")
+			}
+
+			if !offer.YourIPAddr.Equal(ack.YourIPAddr) {
+				errChan <- errors.Wrap(err, "IPs between offer and ack are not equal")
+				return
+			}
+
+			if !dhcp4.IPInRange(from, to, offer.YourIPAddr) {
+				errChan <- errors.Wrap(err, "issued IP not in range")
+				return
+			}
+
+			if !dhcp4.IPInRange(from, to, ack.YourIPAddr) {
+				errChan <- errors.Wrap(err, "issued IP not in range")
+				return
+			}
+		}(i)
 	}
 
-	fmt.Println(resp)
+	for i := 0; i < 50; i++ {
+		<-doneChan
+	}
+
+	select {
+	case err := <-errChan:
+		dumpInterfaces()
+		t.Fatal(err)
+	default:
+	}
 }
-*/

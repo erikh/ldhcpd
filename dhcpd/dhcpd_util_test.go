@@ -48,7 +48,7 @@ func addVethPair(name string, bridge *netlink.Bridge) error {
 	return nil
 }
 
-func setupTest(t *testing.T) {
+func setupTest(t *testing.T) *netlink.Bridge {
 	cleanupTest(t)
 
 	la := netlink.NewLinkAttrs()
@@ -89,16 +89,26 @@ func setupTest(t *testing.T) {
 	if err := netlink.LinkSetUp(bridge); err != nil {
 		t.Fatalf("Could not enable bridge: %v", err)
 	}
+
+	return bridge
+}
+
+func teardownLink(name string) error {
+	link, err := netlink.LinkByName(name)
+	if err == nil {
+		netlink.LinkSetDown(link)
+		if err := netlink.LinkDel(link); err != nil {
+			return errors.Wrapf(err, "Could not delete existing link %v", name)
+		}
+	}
+
+	return nil
 }
 
 func cleanupTest(t *testing.T) {
 	for name := range initialInterfaces {
-		link, err := netlink.LinkByName(name)
-		if err == nil {
-			netlink.LinkSetDown(link)
-			if err := netlink.LinkDel(link); err != nil {
-				t.Fatalf("Could not delete existing link %v: %v", name, err)
-			}
+		if err := teardownLink(name); err != nil {
+			t.Fatal(err)
 		}
 	}
 
@@ -114,7 +124,7 @@ func cleanupTest(t *testing.T) {
 	}
 }
 
-func setupDHCPHandler(t *testing.T, config Config) (*Handler, chan struct{}) {
+func setupDHCPHandler(t *testing.T, config Config) chan struct{} {
 	db, err := config.NewDB()
 	if err != nil {
 		t.Fatalf("Error initializing database: %v", err)
@@ -145,9 +155,10 @@ func setupDHCPHandler(t *testing.T, config Config) (*Handler, chan struct{}) {
 	go func() {
 		<-doneChan
 		s.Close()
+		handler.Close()
 	}()
 
-	return handler, doneChan
+	return doneChan
 }
 
 func dumpInterfaces() {

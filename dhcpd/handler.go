@@ -2,6 +2,7 @@ package dhcpd
 
 import (
 	"net"
+	"sync"
 	"time"
 
 	"github.com/erikh/ldhcpd/db"
@@ -14,17 +15,25 @@ type dhcpOptions map[dhcpv4.OptionCode]dhcpv4.OptionValue
 
 // Handler is the dhpcd handler for serving requests.
 type Handler struct {
-	ip        net.IP
-	options   dhcpOptions
-	config    Config
-	db        *db.DB
-	allocator *Allocator
-	closed    bool
+	ip          net.IP
+	options     dhcpOptions
+	config      Config
+	db          *db.DB
+	allocator   *Allocator
+	closed      bool
+	closedMutex sync.RWMutex
 }
 
 func (h *Handler) purgeLeases() {
 	for {
 		time.Sleep(time.Second)
+		h.closedMutex.RLock()
+		if h.closed {
+			h.closedMutex.RUnlock()
+			return
+		}
+		h.closedMutex.RUnlock()
+
 		count, err := h.db.PurgeLeases(false)
 		if err != nil {
 			logrus.Errorf("While purging leases: %v", err)
@@ -99,6 +108,8 @@ func NewHandler(ip *net.IPNet, config Config, db *db.DB) (*Handler, error) {
 
 // Close the handler
 func (h *Handler) Close() error {
+	h.closedMutex.Lock()
+	defer h.closedMutex.Unlock()
 	h.closed = true
 	return h.db.Close()
 }
