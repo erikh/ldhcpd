@@ -11,7 +11,7 @@ import (
 	"github.com/erikh/ldhcpd/dhcpd"
 	"github.com/erikh/ldhcpd/proto"
 	"github.com/erikh/ldhcpd/version"
-	"github.com/krolaw/dhcp4"
+	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -70,6 +70,11 @@ func serve(ctx *cli.Context) error {
 		return errors.Errorf("usage: %s [interface] [config file]", ctx.App.Name)
 	}
 
+	ip, err := dhcpd.InterfaceIP(ctx.Args()[0])
+	if err != nil {
+		return errors.Wrap(err, "while discovering interface IP")
+	}
+
 	config, err := dhcpd.ParseConfig(ctx.Args()[1])
 	if err != nil {
 		return errors.Wrap(err, "while parsing configuration")
@@ -80,7 +85,7 @@ func serve(ctx *cli.Context) error {
 		return errors.Wrap(err, "while initialiing database")
 	}
 
-	handler, err := dhcpd.NewHandler(ctx.Args()[0], config, db)
+	handler, err := dhcpd.NewHandler(ip, config, db)
 	if err != nil {
 		return errors.Wrap(err, "while configuring dhcpd")
 	}
@@ -103,5 +108,12 @@ func serve(ctx *cli.Context) error {
 		select {} // will never reach dhcp listen
 	}
 
-	return dhcp4.ListenAndServeIf(ctx.Args()[0], handler)
+	laddr := &net.UDPAddr{Port: 67}
+
+	server, err := server4.NewServer(ctx.Args()[0], laddr, handler.ServeDHCP, server4.WithDebugLogger())
+	if err != nil {
+		return errors.Wrap(err, "while creating DHCP service")
+	}
+
+	return server.Serve()
 }

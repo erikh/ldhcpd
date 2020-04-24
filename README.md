@@ -150,9 +150,9 @@ These are the items planned for the near future of this project:
 
 ## Dependencies
 
-- https://github.com/krolaw/dhcp4 for the dhcp4 protocol work, thanks to
-  Richard Warburton (@krolaw), et al. This tool would be much less useful
-  without it.
+- github.com/insomniacslk/dhcp and https://github.com/krolaw/dhcp4 for the
+  dhcp4 protocol work, thanks to the authors, This tool would be much less
+  useful without it.
 - https://github.com/jinzhu/gorm and https://github.com/mattn/go-sqlite3 for the database work.
 - https://google.golang.org/grpc for the control plane protocol.
 - https://github.com/box-builder/box which is a mruby-based docker image builder.
