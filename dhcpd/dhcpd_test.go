@@ -105,11 +105,13 @@ func TestParallelAcquisition(t *testing.T) {
 			c, err := nclient4.New(linkName)
 			if err != nil {
 				errChan <- err
+				return
 			}
 
 			offer, ack, err := c.Request(context.Background())
 			if err != nil {
 				errChan <- errors.Wrap(err, "could not complete request")
+				return
 			}
 
 			if !offer.YourIPAddr.Equal(ack.YourIPAddr) {
