@@ -14,7 +14,7 @@ DOCKER_CMD := docker run -it \
 	-v ${PWD}:$(CODE_PATH) \
 	$(IMAGE_NAME)
 
-release: distclean lint
+release: distclean lint test
 	GOBIN=${PWD}/build/ldhcpd-$$(cat VERSION) VERSION=$$(cat VERSION) make install
 	cp LICENSE README.md example.conf build/ldhcpd-$$(cat VERSION)
 	cd build && tar cvzf ../ldhcpd-$$(cat ../VERSION).tar.gz ldhcpd-$$(cat ../VERSION)
