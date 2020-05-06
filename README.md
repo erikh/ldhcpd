@@ -72,6 +72,12 @@ dns_servers:
 gateway: 10.0.20.1
 
 #
+# Search domains (if not specified, the client will not get a default)
+#
+search_domains:
+  - internal
+
+#
 # Dynamic Range of IPs to use in dynamic lease hand-outs, IP inclusive.
 #
 dynamic_range:

@@ -57,11 +57,12 @@ type Lease struct {
 
 // Config is the configuration of the dhcpd service
 type Config struct {
-	DNSServers   []string `yaml:"dns_servers"`
-	Gateway      string   `yaml:"gateway"`
-	DBFile       string   `yaml:"db_file"`
-	DynamicRange Range    `yaml:"dynamic_range"`
-	Lease        Lease    `yaml:"lease"`
+	DNSServers    []string `yaml:"dns_servers"`
+	Gateway       string   `yaml:"gateway"`
+	DBFile        string   `yaml:"db_file"`
+	DynamicRange  Range    `yaml:"dynamic_range"`
+	Lease         Lease    `yaml:"lease"`
+	SearchDomains []string `yaml:"search_domains"`
 
 	Certificate Certificate `yaml:"certificate"`
 }

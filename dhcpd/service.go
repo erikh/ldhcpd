@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
+	"github.com/insomniacslk/dhcp/rfc1035label"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,6 +17,9 @@ func (h *Handler) configureReply(m *dhcpv4.DHCPv4, mt dhcpv4.MessageType) (*dhcp
 	rep.UpdateOption(dhcpv4.OptMessageType(mt))
 	rep.UpdateOption(dhcpv4.OptServerIdentifier(h.ip))
 	rep.UpdateOption(dhcpv4.OptIPAddressLeaseTime(h.config.Lease.Duration))
+	if len(h.config.SearchDomains) != 0 {
+		rep.UpdateOption(dhcpv4.OptDomainSearch(&rfc1035label.Labels{Labels: h.config.SearchDomains}))
+	}
 
 	for opt, val := range h.options {
 		rep.UpdateOption(dhcpv4.Option{Code: opt, Value: val})

@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
+	"github.com/insomniacslk/dhcp/rfc1035label"
 	"github.com/krolaw/dhcp4"
 	"github.com/pkg/errors"
 )
@@ -74,6 +76,7 @@ func TestParallelAcquisition(t *testing.T) {
 		Lease: Lease{
 			Duration: 5 * time.Second,
 		},
+		SearchDomains: []string{"internal"},
 		DNSServers: []string{
 			"10.0.0.1",
 			"1.1.1.1",
@@ -126,6 +129,22 @@ func TestParallelAcquisition(t *testing.T) {
 
 			if !dhcp4.IPInRange(from, to, ack.YourIPAddr) {
 				errChan <- errors.Wrap(err, "issued IP not in range")
+				return
+			}
+
+			labels, err := rfc1035label.FromBytes(offer.GetOneOption(dhcpv4.OptionDNSDomainSearchList))
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			if len(labels.Labels) == 0 {
+				errChan <- errors.Wrap(err, "search list was not provided in offer")
+				return
+			}
+
+			if labels.Labels[0] != "internal" {
+				errChan <- errors.Wrap(err, "specified domain name is not present")
 				return
 			}
 		}(i)
